@@ -1,0 +1,527 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+/* --- Playtime Staff Console styles --- */
+
+:root {
+  color-scheme: dark;
+  --pt-bg: radial-gradient(circle at top, #1f4bff 0, #050615 55%, #000000 100%);
+  --pt-card: rgba(6, 10, 30, 0.9);
+  --pt-border: rgba(0, 153, 255, 0.6);
+  --pt-accent: #00d5ff;
+  --pt-danger: #ff4e78;
+  --pt-radius: 18px;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
+}
+
+/* Login */
+
+.app-bg {
+  min-height: 100vh;
+  background-image: var(--pt-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card {
+  position: relative;
+  width: 360px;
+  padding: 28px 26px 22px;
+  border-radius: var(--pt-radius);
+  background: radial-gradient(circle at top, #101633 0, #050615 60%, #000 100%);
+  border: 1px solid var(--pt-border);
+  box-shadow:
+    0 0 40px rgba(0, 200, 255, 0.35),
+    0 0 10px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+.login-glow {
+  position: absolute;
+  inset: -120px;
+  opacity: 0.3;
+  background:
+    radial-gradient(circle at 0 0, rgba(255, 0, 200, 0.4), transparent 55%),
+    radial-gradient(circle at 100% 0, rgba(0, 200, 255, 0.45), transparent 55%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.login-title {
+  position: relative;
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow:
+    0 0 10px rgba(0, 230, 255, 0.9),
+    0 0 24px rgba(0, 120, 255, 0.7);
+}
+
+.login-subtitle {
+  position: relative;
+  margin: 0 0 16px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(200, 220, 255, 0.7);
+}
+
+.login-form {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(180, 200, 255, 0.9);
+}
+
+.field input {
+  padding: 9px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 160, 255, 0.7);
+  background: radial-gradient(circle at top, #141b3b 0, #050615 60%);
+  color: #f8fbff;
+  font-size: 14px;
+  outline: none;
+  box-shadow: 0 0 14px rgba(0, 160, 255, 0.4);
+}
+
+.field input:focus {
+  border-color: #00e5ff;
+  box-shadow:
+    0 0 18px rgba(0, 230, 255, 0.9),
+    0 0 34px rgba(0, 100, 255, 0.7);
+}
+
+.login-button {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 999px;
+  border: 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  background: linear-gradient(135deg, #00d5ff, #0066ff);
+  color: #fff;
+  box-shadow:
+    0 0 22px rgba(0, 220, 255, 0.85),
+    0 0 40px rgba(0, 80, 255, 0.85);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+}
+
+.login-button:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.login-button:active {
+  filter: brightness(0.96);
+  transform: translateY(1px) scale(0.99);
+  box-shadow:
+    0 0 12px rgba(0, 220, 255, 0.6),
+    0 0 20px rgba(0, 80, 255, 0.6);
+}
+
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+}
+
+.error-text {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--pt-danger);
+}
+
+/* Role pills */
+
+.login-footer {
+  position: relative;
+  margin-top: 14px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent);
+  color: rgba(235, 245, 255, 0.9);
+}
+
+.pill-owner {
+  border-color: #ffd700;
+  color: #ffe9a3;
+}
+
+.pill-operator {
+  border-color: #00e5ff;
+}
+
+.pill-agent {
+  border-color: #ff7ae6;
+}
+
+.pill-cashier {
+  border-color: #7fff7a;
+}
+
+/* Dashboard */
+
+.dashboard-root {
+  min-height: 100vh;
+  background-image: var(--pt-bg);
+  color: #f5f8ff;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 26px;
+  border-bottom: 1px solid rgba(0, 180, 255, 0.4);
+  backdrop-filter: blur(10px);
+  background: radial-gradient(circle at top, rgba(12, 26, 80, 0.9), rgba(3, 4, 16, 0.9));
+}
+
+.dashboard-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.logout-button {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 120, 150, 0.7);
+  background: radial-gradient(circle at top, rgba(90, 20, 30, 0.9), rgba(10, 3, 8, 0.9));
+  color: #ffd6e0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.dashboard-main {
+  padding: 24px 26px;
+}
+
+.dashboard-card {
+  max-width: 420px;
+  padding: 18px 18px 16px;
+  border-radius: var(--pt-radius);
+  background: var(--pt-card);
+  border: 1px solid rgba(0, 180, 255, 0.5);
+  box-shadow: 0 0 25px rgba(0, 200, 255, 0.4);
+}
+
+.dashboard-card h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dashboard-card ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+/* --- Voucher Panel --- */
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.6fr);
+  gap: 18px;
+}
+
+@media (max-width: 900px) {
+  .panel-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.panel-card {
+  padding: 16px 16px 14px;
+  border-radius: 18px;
+  background: radial-gradient(circle at top, #12152e 0, #050614 70%);
+  border: 1px solid rgba(0, 180, 255, 0.4);
+  box-shadow: 0 0 24px rgba(0, 180, 255, 0.25);
+}
+
+.panel-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.panel-caption {
+  margin: 0 0 12px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.panel-warning {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 190, 80, 0.8);
+  background: rgba(80, 50, 5, 0.7);
+  font-size: 12px;
+}
+
+.panel-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .panel-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.panel-block h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.form-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-vertical label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.form-vertical input {
+  padding: 7px 9px;
+  border-radius: 9px;
+  border: 1px solid rgba(0, 160, 255, 0.6);
+  background: #050818;
+  color: #f4f7ff;
+  font-size: 13px;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  margin-top: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #00d5ff, #0070ff);
+  border-color: rgba(0, 220, 255, 0.9);
+  color: #fff;
+  box-shadow: 0 0 18px rgba(0, 180, 255, 0.8);
+}
+
+.btn-secondary {
+  background: radial-gradient(circle at top, #1e8b4b, #044220);
+  border-color: rgba(120, 255, 165, 0.9);
+  color: #e9fff2;
+  box-shadow: 0 0 16px rgba(80, 220, 140, 0.8);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #cfe3ff;
+  border-color: rgba(200, 220, 255, 0.5);
+}
+
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-ghost:hover {
+  filter: brightness(1.06);
+}
+
+.status-text {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* Voucher table */
+
+.panel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.voucher-table-wrapper {
+  max-height: 360px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 120, 220, 0.5);
+  background: rgba(2, 6, 16, 0.85);
+}
+
+.voucher-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.voucher-table thead {
+  background: linear-gradient(to right, #04102b, #061638);
+}
+
+.voucher-table th,
+.voucher-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(10, 30, 70, 0.8);
+  white-space: nowrap;
+}
+
+.voucher-table th {
+  text-align: left;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: rgba(205, 225, 255, 0.9);
+}
+
+.voucher-table tbody tr:nth-child(even) {
+  background: rgba(8, 12, 30, 0.9);
+}
+
+.voucher-table tbody tr:nth-child(odd) {
+  background: rgba(5, 8, 20, 0.9);
+}
+
+.voucher-table td {
+  color: rgba(222, 236, 255, 0.9);
+}
+
+.voucher-table td:nth-child(4) {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.empty-cell {
+  text-align: center;
+  padding: 12px 8px;
+  opacity: 0.7;
+}
