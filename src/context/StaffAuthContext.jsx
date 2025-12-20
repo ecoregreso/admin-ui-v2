@@ -7,54 +7,82 @@ const StaffAuthContext = createContext(null);
 export function StaffAuthProvider({ children }) {
   const [staff, setStaff] = useState(null);
   const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // session bootstrap
+  const [error, setError] = useState("");
 
+  // Boot session from localStorage on first mount
   useEffect(() => {
-    const savedToken = localStorage.getItem("ptu_staff_token");
-    const savedStaff = localStorage.getItem("ptu_staff_payload");
+    try {
+      const savedToken = localStorage.getItem("ptu_staff_token");
+      const savedStaff = localStorage.getItem("ptu_staff_payload");
 
-    if (savedToken && savedStaff) {
-      try {
+      if (savedToken && savedStaff) {
+        const parsedStaff = JSON.parse(savedStaff);
         setToken(savedToken);
-        setStaff(JSON.parse(savedStaff));
-      } catch {
-        localStorage.removeItem("ptu_staff_token");
-        localStorage.removeItem("ptu_staff_payload");
+        setStaff(parsedStaff);
+        api.defaults.headers.common.Authorization = `Bearer ${savedToken}`;
       }
+    } catch (e) {
+      console.error("[StaffAuth] failed to restore session:", e);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
-  const login = async (username, password) => {
-    const res = await api.post("/api/v1/staff/login", { username, password });
-    if (!res.data.ok) {
-      throw new Error(res.data.error || "Login failed");
+  async function login({ username, password }) {
+    setError("");
+
+    try {
+      const res = await api.post("/api/v1/staff/login", {
+        username,
+        password,
+      });
+
+      const accessToken = res.data?.token || res.data?.tokens?.accessToken;
+      const staffPayload = res.data?.staff;
+
+      if (!res.data || !res.data.ok || !accessToken || !staffPayload) {
+        throw new Error("Unexpected login response");
+      }
+
+      setToken(accessToken);
+      setStaff(staffPayload);
+
+      localStorage.setItem("ptu_staff_token", accessToken);
+      localStorage.setItem("ptu_staff_payload", JSON.stringify(staffPayload));
+
+      api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+
+      return true;
+    } catch (err) {
+      console.error("[StaffAuth] login error:", err);
+      setError("Invalid username or password");
+      return false;
     }
+  }
 
-    const { token: jwt, staff: staffData } = res.data;
-
-    localStorage.setItem("ptu_staff_token", jwt);
-    localStorage.setItem("ptu_staff_payload", JSON.stringify(staffData));
-
-    setToken(jwt);
-    setStaff(staffData);
-    return staffData;
-  };
-
-  const logout = () => {
+  async function logout() {
+    try {
+      await api.post("/api/v1/staff/logout");
+    } catch (err) {
+      // ignore logout errors
+    }
+    setStaff(null);
+    setToken(null);
+    setError("");
     localStorage.removeItem("ptu_staff_token");
     localStorage.removeItem("ptu_staff_payload");
-    setToken(null);
-    setStaff(null);
-  };
+    delete api.defaults.headers.common.Authorization;
+  }
 
   const value = {
     staff,
     token,
-    isAuthenticated: !!token && !!staff,
+    loading, // session loading (used by PrivateRoute)
+    error,
+    isAuthenticated: !!staff && !!token,
     login,
     logout,
-    loading,
   };
 
   return (

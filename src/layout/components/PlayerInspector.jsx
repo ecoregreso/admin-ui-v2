@@ -2,11 +2,14 @@
 import React, { useState } from "react";
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
 function getToken() {
-  // Adjust this if your admin login stores token under a different key
-  return localStorage.getItem("accessToken") || localStorage.getItem("token");
+  return (
+    localStorage.getItem("ptu_staff_token") ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("token")
+  );
 }
 
 export default function PlayerInspector() {
@@ -387,4 +390,3 @@ export default function PlayerInspector() {
     </div>
   );
 }
-

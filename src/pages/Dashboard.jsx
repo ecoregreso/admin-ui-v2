@@ -1,52 +1,303 @@
-// src/pages/Dashboard.jsx
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+import { fetchDashboard } from "../api/dashboardApi";
+import { useStaffAuth } from "../context/StaffAuthContext.jsx";
+
+function fmtNumber(value, digits = 2) {
+  if (value == null) return "0";
+  return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits });
+}
+
+function fmtDate(value) {
+  try {
+    return new Date(value).toLocaleString();
+  } catch {
+    return "";
+  }
+}
 
 export default function Dashboard() {
+  const { staff } = useStaffAuth();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function load() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetchDashboard();
+      if (!res.ok) throw new Error(res.error || "Failed to load dashboard");
+      setData(res);
+    } catch (err) {
+      console.error("[Dashboard] load error:", err);
+      setError(err.message || "Failed to load dashboard");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const series = useMemo(() => data?.series?.daily || [], [data]);
+  const kpis = data?.kpis || {};
+  const sessions = data?.sessions || {};
+  const recent = data?.recent || {};
+
   return (
-    <div>
-      <div className="section-header">
-        <div>
-          <div className="section-title">Dashboard</div>
-          <div className="section-subtitle">
-            High-level view of your operation. You can plug your own widgets
-            here later.
+    <div className="page">
+      <div className="panel">
+        <div className="panel-header">
+          <div>
+            <h2 className="panel-title">Command Overview</h2>
+            <p className="panel-subtitle">
+              Live operational snapshot {staff ? `for ${staff.username}` : ""}
+            </p>
+          </div>
+          <div className="panel-actions">
+            <button className="btn btn-primary" onClick={load} disabled={loading}>
+              {loading ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
+        </div>
+
+        {error && <div className="alert">{error}</div>}
+
+        <div className="stat-grid">
+          <div className="stat-card">
+            <div className="stat-label">Total Players</div>
+            <div className="stat-value">{fmtNumber(kpis.totalPlayers, 0)}</div>
+            <div className="stat-meta">Active: {fmtNumber(kpis.activePlayers, 0)}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">New Players (24h)</div>
+            <div className="stat-value">{fmtNumber(kpis.newPlayers24h, 0)}</div>
+            <div className="stat-meta">Sessions live: {fmtNumber(sessions.activePlayers, 0)}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Wallet Float</div>
+            <div className="stat-value">${fmtNumber(kpis.walletTotal)}</div>
+            <div className="stat-meta">Credits 24h: ${fmtNumber(kpis.credits24h)}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">GGR (24h)</div>
+            <div className="stat-value">${fmtNumber(kpis.ggr24h)}</div>
+            <div className="stat-meta">Bets: ${fmtNumber(kpis.betAmount24h)}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Voucher Volume</div>
+            <div className="stat-value">${fmtNumber(kpis.voucherAmount24h)}</div>
+            <div className="stat-meta">Bonus: ${fmtNumber(kpis.voucherBonus24h)}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Debits (24h)</div>
+            <div className="stat-value">${fmtNumber(kpis.debits24h)}</div>
+            <div className="stat-meta">Staff sessions: {fmtNumber(sessions.activeStaff, 0)}</div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-4">
-        <div className="card">
-          <div className="card-title">Status</div>
-          <div className="card-value">Online</div>
-          <div className="card-subtext">
-            Backend reachable, auth and wallet stack live.
+      <div className="grid-2">
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h3 className="panel-title">7-Day Pulse</h3>
+              <p className="panel-subtitle">Bet vs win trend</p>
+            </div>
+          </div>
+          <div style={{ width: "100%", height: 260 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={series}>
+                <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
+                <XAxis dataKey="date" stroke="rgba(202,210,224,0.6)" />
+                <YAxis stroke="rgba(202,210,224,0.6)" />
+                <Tooltip
+                  contentStyle={{
+                    background: "rgba(8, 10, 14, 0.9)",
+                    border: "1px solid rgba(39, 217, 255, 0.4)",
+                    borderRadius: 12,
+                    color: "#f4f6fa",
+                  }}
+                />
+                <Line type="monotone" dataKey="betAmount" stroke="#27d9ff" strokeWidth={2} />
+                <Line type="monotone" dataKey="winAmount" stroke="#ff304f" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-title">Quick tip</div>
-          <div className="card-subtext">
-            Head to <strong>Reports</strong> to view GGR, vouchers and player
-            KPIs over time.
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h3 className="panel-title">Live Sessions</h3>
+              <p className="panel-subtitle">Active staff and player footprints</p>
+            </div>
+          </div>
+          <div className="stack">
+            <div className="inline">
+              <span className="tag tag-blue">Players {fmtNumber(sessions.activePlayers, 0)}</span>
+              <span className="tag tag-red">Staff {fmtNumber(sessions.activeStaff, 0)}</span>
+            </div>
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Role</th>
+                    <th>Last Seen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(recent.staffSessions || []).map((s) => (
+                    <tr key={s.id}>
+                      <td>{String(s.userId).slice(0, 10)}</td>
+                      <td>{s.role}</td>
+                      <td>{fmtDate(s.lastSeenAt || s.createdAt)}</td>
+                    </tr>
+                  ))}
+                  {!recent.staffSessions?.length && (
+                    <tr>
+                      <td colSpan={3} className="empty">
+                        No staff sessions yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid-2">
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h3 className="panel-title">Recent Transactions</h3>
+              <p className="panel-subtitle">Last ledger movements</p>
+            </div>
+          </div>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>User</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(recent.transactions || []).map((t) => (
+                  <tr key={t.id}>
+                    <td>{t.type}</td>
+                    <td>${fmtNumber(t.amount)}</td>
+                    <td>{t.wallet?.userId ? String(t.wallet.userId).slice(0, 10) : "-"}</td>
+                    <td>{fmtDate(t.createdAt)}</td>
+                  </tr>
+                ))}
+                {!recent.transactions?.length && (
+                  <tr>
+                    <td colSpan={4} className="empty">
+                      No transactions yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-title">Next phase</div>
-          <div className="card-subtext">
-            Add per-agent &amp; per-cashier views once your roles tree is ready.
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h3 className="panel-title">Recent Vouchers</h3>
+              <p className="panel-subtitle">Creation and redemption flow</p>
+            </div>
+          </div>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(recent.vouchers || []).map((v) => (
+                  <tr key={v.id}>
+                    <td>{v.code}</td>
+                    <td>${fmtNumber(v.amount)}</td>
+                    <td>{v.status}</td>
+                    <td>{fmtDate(v.createdAt)}</td>
+                  </tr>
+                ))}
+                {!recent.vouchers?.length && (
+                  <tr>
+                    <td colSpan={4} className="empty">
+                      No vouchers yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
+      </div>
 
-        <div className="card">
-          <div className="card-title">Customization</div>
-          <div className="card-subtext">
-            Replace this Dashboard content with your own widgets / charts
-            whenever you&apos;re ready.
+      <div className="panel">
+        <div className="panel-header">
+          <div>
+            <h3 className="panel-title">Recent Game Rounds</h3>
+            <p className="panel-subtitle">Bet and win activity</p>
           </div>
+        </div>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Game</th>
+                <th>Player</th>
+                <th>Bet</th>
+                <th>Win</th>
+                <th>Status</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(recent.rounds || []).map((r) => (
+                <tr key={r.id}>
+                  <td>{r.gameId}</td>
+                  <td>{r.player?.userCode || "-"}</td>
+                  <td>${fmtNumber(r.betAmount)}</td>
+                  <td>${fmtNumber(r.winAmount)}</td>
+                  <td>{r.status}</td>
+                  <td>{fmtDate(r.createdAt)}</td>
+                </tr>
+              ))}
+              {!recent.rounds?.length && (
+                <tr>
+                  <td colSpan={6} className="empty">
+                    No rounds recorded yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   );
 }
-

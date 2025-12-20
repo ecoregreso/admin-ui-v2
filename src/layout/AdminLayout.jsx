@@ -1,103 +1,139 @@
-// src/layout/AdminLayout.jsx
 import React from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useStaffAuth } from "../context/StaffAuthContext.jsx";
 
-export default function AdminLayout() {
+function NavItem({ to, label, disabled }) {
+  const location = useLocation();
+  const safeTo = disabled ? location.pathname : to;
+
   return (
-    <div className="app-shell">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <div
-          style={{
-            padding: "18px 18px 12px",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "1rem",
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "#4fd1ff",
-            }}
-          >
-            Playtime USA
-          </div>
-          <div
-            style={{
-              fontSize: "0.75rem",
-              color: "rgba(161,172,199,0.8)",
-              marginTop: 4,
-            }}
-          >
-            Admin backoffice
-          </div>
-        </div>
-
-        <nav style={{ padding: "14px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
-          <SidebarLink to="/">Dashboard</SidebarLink>
-          <SidebarLink to="/reports">Reports</SidebarLink>
-          {/* add more links as you add more sections */}
-        </nav>
-      </aside>
-
-      {/* Main content */}
-      <main className="app-main">
-        <Outlet />
-      </main>
-    </div>
+    <NavLink
+      to={safeTo}
+      onClick={(e) => {
+        if (disabled) e.preventDefault();
+      }}
+      className={({ isActive }) =>
+        `nav-link${isActive ? " active" : ""}${disabled ? " disabled" : ""}`
+      }
+      aria-disabled={disabled}
+    >
+      <span className="nav-dot" />
+      {label}
+    </NavLink>
   );
 }
 
-function SidebarLink({ to, children }) {
+export default function AdminLayout() {
+  const { staff, logout } = useStaffAuth();
+  const perms = staff?.permissions || [];
+  const can = (perm) => perms.includes(perm);
+
+  const sections = [
+    {
+      title: "Overview",
+      items: [{ to: "/dashboard", label: "Dashboard", perms: ["finance:read"] }],
+    },
+    {
+      title: "Operations",
+      items: [
+        { to: "/players", label: "Players", perms: ["player:read"] },
+        { to: "/vouchers", label: "Vouchers", perms: ["voucher:read"] },
+        { to: "/reports", label: "Reports", perms: ["finance:read"] },
+      ],
+    },
+    {
+      title: "Finance",
+      items: [
+        { to: "/transactions", label: "Transactions", perms: ["finance:read"] },
+        { to: "/finance-queue", label: "Finance Queue", perms: ["finance:write", "finance:read"] },
+      ],
+    },
+    {
+      title: "Security",
+      items: [
+        { to: "/pam", label: "PAM / Staff", perms: ["staff:manage"] },
+        { to: "/sessions", label: "Sessions", perms: ["staff:manage", "player:read"] },
+        { to: "/audit", label: "Audit Log", perms: ["staff:manage"] },
+      ],
+    },
+  ];
+
   return (
-    <NavLink
-      to={to}
-      end
-      className={({ isActive }) =>
-        "sidebar-link" + (isActive ? " sidebar-link-active" : "")
-      }
-      style={({ isActive }) => ({
-        display: "block",
-        padding: "8px 10px",
-        borderRadius: 999,
-        fontSize: "0.82rem",
-        color: isActive ? "#4fd1ff" : "rgba(228,233,255,0.86)",
-        textDecoration: "none",
-        letterSpacing: "0.04em",
-        textTransform: "uppercase",
-        opacity: isActive ? 1 : 0.85,
-        background: isActive
-          ? "linear-gradient(120deg, rgba(79,209,255,0.16), rgba(255,77,189,0.1))"
-          : "transparent",
-        border: isActive
-          ? "1px solid rgba(79,209,255,0.6)"
-          : "1px solid transparent",
-        transition:
-          "background 0.18s ease-out, color 0.18s ease-out, border-color 0.18s ease-out, transform 0.12s ease-out",
-      })}
-    >
-      {({ isActive }) => (
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            transform: isActive ? "translateX(2px)" : "translateX(0)",
-          }}
-        >
-          <span
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: 999,
-              background: isActive ? "#4fd1ff" : "rgba(255,255,255,0.22)",
-            }}
-          />
-          {children}
-        </span>
-      )}
-    </NavLink>
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div className="logo-row">
+            <div className="logo-badge">PTU</div>
+            <div>
+              <div className="logo-title">PlayTime USA</div>
+              <div className="logo-subtitle">Admin Core</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="sidebar-status">
+          <div className="status-label">System</div>
+          <div className="status-value">
+            <span className="status-dot" />
+            Live secure channel
+          </div>
+        </div>
+
+        <nav className="sidebar-nav">
+          {sections.map((section) => (
+            <div key={section.title}>
+              <div className="nav-section">{section.title}</div>
+              {section.items.map((item) => {
+                const required = item.perms || [];
+                const allowed = required.length === 0 ? true : required.some(can);
+                return (
+                  <NavItem
+                    key={item.to}
+                    to={item.to}
+                    label={item.label}
+                    disabled={!allowed}
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        <div className="sidebar-footer">
+          {staff && (
+            <div className="user-chip">
+              <div className="user-avatar">
+                {staff.username ? staff.username.slice(0, 1).toUpperCase() : "S"}
+              </div>
+              <div className="user-meta">
+                <strong>{staff.username}</strong>
+                <span>Role: {staff.role}</span>
+              </div>
+            </div>
+          )}
+          <button className="btn btn-secondary" onClick={logout}>
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      <div className="main-panel">
+        <header className="topbar">
+          <div>
+            <h1 className="topbar-title">Operations Console</h1>
+            <p className="topbar-subtitle">Real-time telemetry and control surface</p>
+          </div>
+          <div className="topbar-right">
+            <span className="status-pill live">
+              <span className="status-dot" /> Secure
+            </span>
+          </div>
+        </header>
+
+        <main className="content">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 }

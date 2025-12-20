@@ -33,7 +33,7 @@ export default function VoucherPanel({ staff }) {
     setListError("");
 
     try {
-      const res = await fetch("http://localhost:3000/vouchers", {
+      const res = await fetch(`/vouchers`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -88,7 +88,7 @@ export default function VoucherPanel({ staff }) {
     }
 
     try {
-      const res = await fetch("http://localhost:3000/vouchers", {
+      const res = await fetch(`/vouchers`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
