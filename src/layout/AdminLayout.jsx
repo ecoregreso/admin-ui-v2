@@ -128,6 +128,7 @@ export default function AdminLayout() {
               <span className="status-dot" /> Secure
             </span>
           </div>
+          <div className="status-pill">Secure Session</div>
         </header>
 
         <main className="content">
