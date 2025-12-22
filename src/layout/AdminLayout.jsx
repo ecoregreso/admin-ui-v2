@@ -63,7 +63,9 @@ export default function AdminLayout() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <div className="logo-row">
-            <div className="logo-badge">PTU</div>
+            <div className="logo-img-wrap">
+              <img className="logo-img" src="/favicon.png" alt="PlayTime USA logo" />
+            </div>
             <div>
               <div className="logo-title">PlayTime USA</div>
               <div className="logo-subtitle">Admin Core</div>
