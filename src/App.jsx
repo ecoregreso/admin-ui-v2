@@ -11,6 +11,7 @@ import TransactionsList from "./pages/TransactionsList.jsx";
 import SessionsList from "./pages/SessionsList.jsx";
 import AuditLog from "./pages/AuditLog.jsx";
 import PurchaseOrders from "./pages/PurchaseOrders.jsx";
+import Messages from "./pages/Messages.jsx";
 import AdminLayout from "./layout/AdminLayout.jsx";
 import { useStaffAuth } from "./context/StaffAuthContext.jsx";
 
@@ -109,6 +110,7 @@ export default function App() {
               </RequirePermission>
             }
           />
+          <Route path="messages" element={<Messages />} />
           <Route
             path="transactions"
             element={
