@@ -34,7 +34,6 @@ export async function createOrder({
   funAmount,
   btcAmount,
   btcRate,
-  btcAddress,
   note,
   requestedBy,
 }) {
@@ -44,7 +43,6 @@ export async function createOrder({
     funAmount,
     btcAmount,
     btcRate,
-    btcAddress,
     note: note || "",
     status: "pending",
     requestedBy,
@@ -58,7 +56,7 @@ export async function createOrder({
   return order;
 }
 
-export async function updateOrderStatus(id, nextStatus, approver) {
+export async function updateOrderStatus(id, nextStatus, approver, ownerBtcAddress) {
   const list = loadAll();
   const idx = list.findIndex((o) => o.id === id);
   if (idx === -1) throw new Error("Order not found");
@@ -67,6 +65,7 @@ export async function updateOrderStatus(id, nextStatus, approver) {
     ...list[idx],
     status: nextStatus,
     approvedBy: approver || list[idx].approvedBy,
+    ownerBtcAddress: ownerBtcAddress || list[idx].ownerBtcAddress,
     updatedAt: new Date().toISOString(),
   };
   saveAll(list);

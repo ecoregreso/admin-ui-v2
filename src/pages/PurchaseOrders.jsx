@@ -27,8 +27,8 @@ export default function PurchaseOrders() {
   const [funAmount, setFunAmount] = useState("");
   const [btcAmount, setBtcAmount] = useState("");
   const [btcRate, setBtcRate] = useState(""); // FUN per BTC (1 FUN ≈ 1 USD)
-  const [btcAddress, setBtcAddress] = useState("");
   const [note, setNote] = useState("");
+  const [ownerBtcAddress, setOwnerBtcAddress] = useState("");
 
   const canApprove = useMemo(
     () => (staff?.permissions || []).includes("finance:write"),
@@ -69,24 +69,17 @@ export default function PurchaseOrders() {
       return;
     }
 
-    if (!btcAddress.trim()) {
-      setError("BTC address is required.");
-      return;
-    }
-
     try {
       await createOrder({
         funAmount: amountNum,
         btcAmount: btcNum,
         btcRate: Number(btcRate) || null,
-        btcAddress: btcAddress.trim(),
         note: note.trim(),
         requestedBy: staff?.username || "agent",
       });
       setFunAmount("");
       setBtcAmount("");
       setBtcRate("");
-      setBtcAddress("");
       setNote("");
       setSuccess("Request submitted. Awaiting owner approval.");
       await load();
@@ -97,10 +90,15 @@ export default function PurchaseOrders() {
   }
 
   async function changeStatus(id, next) {
+    if (next === "approved" && !ownerBtcAddress.trim()) {
+      setError("Owner BTC address is required to approve.");
+      return;
+    }
     setError("");
     setSuccess("");
     try {
-      await updateOrderStatus(id, next, staff?.username || "owner");
+      await updateOrderStatus(id, next, staff?.username || "owner", ownerBtcAddress.trim());
+      setOwnerBtcAddress("");
       await load();
     } catch (e) {
       console.error(e);
@@ -134,17 +132,6 @@ export default function PurchaseOrders() {
             onChange={(e) => setFunAmount(e.target.value)}
             className="input"
             placeholder="e.g., 1000"
-            required
-          />
-        </div>
-        <div className="field">
-          <label>BTC Address (client wallet)</label>
-          <input
-            type="text"
-            value={btcAddress}
-            onChange={(e) => setBtcAddress(e.target.value)}
-            className="input"
-            placeholder="bc1..."
             required
           />
         </div>
@@ -235,7 +222,7 @@ export default function PurchaseOrders() {
               <th>Request ID</th>
               <th>FUN</th>
               <th>BTC</th>
-              <th>BTC Address</th>
+              <th>Owner BTC</th>
               <th>Status</th>
               <th>Requested By</th>
               <th>Updated</th>
@@ -260,10 +247,7 @@ export default function PurchaseOrders() {
                     <div className="muted small">Rate: {Number(o.btcRate).toLocaleString()} FUN / BTC</div>
                   ) : null}
                 </td>
-                <td>
-                  <code>{o.btcAddress}</code>
-                  {o.note ? <div className="muted small">{o.note}</div> : null}
-                </td>
+                <td>{o.ownerBtcAddress ? <code>{o.ownerBtcAddress}</code> : <span className="muted small">Not set</span>}</td>
                 <td>
                   <StatusPill status={o.status} />
                 </td>
@@ -273,6 +257,14 @@ export default function PurchaseOrders() {
                   <td>
                     {o.status === "pending" && (
                       <div className="btn-group">
+                        <input
+                          type="text"
+                          className="input"
+                          placeholder="Owner BTC address"
+                          value={ownerBtcAddress}
+                          onChange={(e) => setOwnerBtcAddress(e.target.value)}
+                          style={{ marginBottom: "6px" }}
+                        />
                         <button className="btn btn-secondary" onClick={() => changeStatus(o.id, "approved")}>
                           Approve
                         </button>
