@@ -10,6 +10,7 @@ import FinanceQueue from "./pages/FinanceQueue.jsx";
 import TransactionsList from "./pages/TransactionsList.jsx";
 import SessionsList from "./pages/SessionsList.jsx";
 import AuditLog from "./pages/AuditLog.jsx";
+import PurchaseOrders from "./pages/PurchaseOrders.jsx";
 import AdminLayout from "./layout/AdminLayout.jsx";
 import { useStaffAuth } from "./context/StaffAuthContext.jsx";
 
@@ -113,6 +114,14 @@ export default function App() {
             element={
               <RequirePermission permission="finance:read">
                 <TransactionsList />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="purchase-orders"
+            element={
+              <RequirePermission permission="finance:read">
+                <PurchaseOrders />
               </RequirePermission>
             }
           />

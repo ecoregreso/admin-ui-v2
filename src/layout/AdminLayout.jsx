@@ -45,6 +45,7 @@ export default function AdminLayout() {
       title: "Finance",
       items: [
         { to: "/transactions", label: "Transactions", perms: ["finance:read"] },
+        { to: "/purchase-orders", label: "Funcoin Orders", perms: ["finance:read"] },
         { to: "/finance-queue", label: "Finance Queue", perms: ["finance:write", "finance:read"] },
       ],
     },
