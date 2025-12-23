@@ -2,6 +2,7 @@
 // This is a placeholder until a backend endpoint is available.
 
 const STORAGE_KEY = "funcoin_purchase_orders";
+const OWNER_ADDR_KEY = "funcoin_owner_btc_address";
 
 function loadAll() {
   try {
@@ -30,12 +31,29 @@ export async function listOrders() {
   return loadAll().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
+export function getOwnerBtcAddress() {
+  try {
+    return localStorage.getItem(OWNER_ADDR_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function setOwnerBtcAddress(addr) {
+  try {
+    localStorage.setItem(OWNER_ADDR_KEY, addr || "");
+  } catch {
+    /* ignore */
+  }
+}
+
 export async function createOrder({
   funAmount,
   btcAmount,
   btcRate,
   note,
   requestedBy,
+  ownerBtcAddress,
 }) {
   const now = new Date().toISOString();
   const order = {
@@ -44,7 +62,7 @@ export async function createOrder({
     btcAmount,
     btcRate,
     note: note || "",
-    status: "pending",
+    ownerBtcAddress: ownerBtcAddress || getOwnerBtcAddress() || "",
     requestedBy,
     createdAt: now,
     updatedAt: now,

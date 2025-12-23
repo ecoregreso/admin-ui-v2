@@ -3,19 +3,9 @@ import { useStaffAuth } from "../context/StaffAuthContext.jsx";
 import {
   listOrders,
   createOrder,
-  updateOrderStatus,
+  getOwnerBtcAddress,
+  setOwnerBtcAddress,
 } from "../api/purchaseOrdersApi.js";
-
-// Simple status pill component
-function StatusPill({ status }) {
-  const map = {
-    pending: { label: "Pending owner review", className: "pill pill-warn" },
-    approved: { label: "Approved", className: "pill pill-success" },
-    rejected: { label: "Rejected", className: "pill pill-danger" },
-  };
-  const meta = map[status] || { label: status, className: "pill" };
-  return <span className={meta.className}>{meta.label}</span>;
-}
 
 export default function PurchaseOrders() {
   const { staff } = useStaffAuth();
@@ -28,9 +18,9 @@ export default function PurchaseOrders() {
   const [btcAmount, setBtcAmount] = useState("");
   const [btcRate, setBtcRate] = useState(""); // FUN per BTC (1 FUN ≈ 1 USD)
   const [note, setNote] = useState("");
-  const [ownerBtcAddress, setOwnerBtcAddress] = useState("");
 
-  const canApprove = useMemo(
+  const [ownerBtcAddress, setOwnerBtcAddressState] = useState(getOwnerBtcAddress());
+  const canManageOwnerAddr = useMemo(
     () => (staff?.permissions || []).includes("finance:write"),
     [staff]
   );
@@ -41,6 +31,7 @@ export default function PurchaseOrders() {
     try {
       const data = await listOrders();
       setOrders(data);
+      setOwnerBtcAddressState(getOwnerBtcAddress());
     } catch (e) {
       console.error(e);
       setError("Failed to load purchase orders.");
@@ -68,6 +59,10 @@ export default function PurchaseOrders() {
       setError("Enter a BTC amount greater than 0.");
       return;
     }
+    if (!ownerBtcAddress.trim()) {
+      setError("Owner BTC address is required.");
+      return;
+    }
 
     try {
       await createOrder({
@@ -76,12 +71,13 @@ export default function PurchaseOrders() {
         btcRate: Number(btcRate) || null,
         note: note.trim(),
         requestedBy: staff?.username || "agent",
+        ownerBtcAddress: ownerBtcAddress.trim(),
       });
       setFunAmount("");
       setBtcAmount("");
       setBtcRate("");
       setNote("");
-      setSuccess("Request submitted. Awaiting owner approval.");
+      setSuccess("Order submitted. Send BTC to the owner address shown below.");
       await load();
     } catch (e) {
       console.error(e);
@@ -89,31 +85,42 @@ export default function PurchaseOrders() {
     }
   }
 
-  async function changeStatus(id, next) {
-    if (next === "approved" && !ownerBtcAddress.trim()) {
-      setError("Owner BTC address is required to approve.");
-      return;
-    }
-    setError("");
-    setSuccess("");
+  async function fetchRate() {
     try {
-      await updateOrderStatus(id, next, staff?.username || "owner", ownerBtcAddress.trim());
-      setOwnerBtcAddress("");
-      await load();
-    } catch (e) {
-      console.error(e);
-      setError("Failed to update status.");
+      setError("");
+      const res = await fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+      );
+      const data = await res.json();
+      const rate = Number(data?.bitcoin?.usd);
+      if (Number.isFinite(rate) && rate > 0) {
+        setBtcRate(rate);
+        const fun = Number(funAmount);
+        if (Number.isFinite(fun) && fun > 0) {
+          setBtcAmount((fun / rate).toFixed(8));
+        }
+      } else {
+        setError("Could not fetch BTC rate.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Could not fetch BTC rate.");
     }
+  }
+
+  function updateOwnerAddress(addr) {
+    setOwnerBtcAddressState(addr);
+    setOwnerBtcAddress(addr);
   }
 
   return (
     <div className="panel">
       <div className="panel-header">
         <div>
-          <h2 className="panel-title">Funcoin Purchase Requests (BTC)</h2>
+          <h2 className="panel-title">Funcoin Purchase (BTC)</h2>
           <p className="panel-subtitle">
-            Agents/Operators can request FUN credit; owner reviews and responds with an approved order and BTC target.
-            No PII stored—only wallet addresses and amounts.
+            Agents/Operators enter FUN amount → auto BTC conversion → submit to see the owner BTC address for payment.
+            Single-step flow; no approval queue. Owner can update the BTC address below.
           </p>
         </div>
       </div>
@@ -129,7 +136,15 @@ export default function PurchaseOrders() {
             min="0"
             step="0.01"
             value={funAmount}
-            onChange={(e) => setFunAmount(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setFunAmount(val);
+              const fun = Number(val);
+              const rate = Number(btcRate);
+              if (Number.isFinite(fun) && Number.isFinite(rate) && rate > 0) {
+                setBtcAmount((fun / rate).toFixed(8));
+              }
+            }}
             className="input"
             placeholder="e.g., 1000"
             required
@@ -154,39 +169,13 @@ export default function PurchaseOrders() {
               className="input"
               placeholder="e.g., 60000 (FUN per BTC)"
             />
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={async () => {
-                try {
-                  setError("");
-                  const res = await fetch(
-                    "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
-                  );
-                  const data = await res.json();
-                  // Treat FUN 1:1 with USD; btcRate = price of 1 BTC in FUN.
-                  const rate = Number(data?.bitcoin?.usd);
-                  if (Number.isFinite(rate) && rate > 0) {
-                    setBtcRate(rate);
-                    const fun = Number(funAmount);
-                    if (Number.isFinite(fun) && fun > 0) {
-                      setBtcAmount((fun / rate).toFixed(8));
-                    }
-                  } else {
-                    setError("Could not fetch BTC/USD rate.");
-                  }
-                } catch (err) {
-                  console.error(err);
-                  setError("Could not fetch BTC/USD rate.");
-                }
-              }}
-            >
+            <button type="button" className="btn btn-secondary" onClick={fetchRate}>
               Fetch Rate
             </button>
           </div>
         </div>
         <div className="field">
-          <label>BTC Amount (auto-calculated, editable)</label>
+          <label>BTC Amount (auto, editable)</label>
           <input
             type="number"
             min="0"
@@ -210,10 +199,36 @@ export default function PurchaseOrders() {
         </div>
         <div className="field span-2">
           <button type="submit" className="btn" disabled={loading}>
-            {loading ? "Submitting..." : "Submit Purchase Request"}
+            {loading ? "Submitting..." : "Submit Order"}
           </button>
         </div>
       </form>
+
+      <div className="panel" style={{ marginTop: "12px" }}>
+        <div className="panel-header">
+          <div>
+            <h3 className="panel-title">Owner BTC Address</h3>
+            <p className="panel-subtitle">
+              Agents copy this address after submitting. Owner can update it below.
+            </p>
+          </div>
+        </div>
+        <div className="form-grid">
+          <div className="field span-2">
+            <label>Current Owner BTC Address</label>
+            <input
+              className="input"
+              value={ownerBtcAddress}
+              onChange={(e) => updateOwnerAddress(e.target.value)}
+              disabled={!canManageOwnerAddr}
+              placeholder="bc1..."
+            />
+            {!canManageOwnerAddr && (
+              <div className="muted small">View-only. Finance can update this.</div>
+            )}
+          </div>
+        </div>
+      </div>
 
       <div className="table-wrap">
         <table className="table">
@@ -223,16 +238,14 @@ export default function PurchaseOrders() {
               <th>FUN</th>
               <th>BTC</th>
               <th>Owner BTC</th>
-              <th>Status</th>
               <th>Requested By</th>
               <th>Updated</th>
-              {canApprove && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
             {orders.length === 0 && (
               <tr>
-                <td colSpan={canApprove ? 7 : 6} className="muted">
+                <td colSpan={6} className="muted">
                   No purchase requests yet.
                 </td>
               </tr>
@@ -248,36 +261,8 @@ export default function PurchaseOrders() {
                   ) : null}
                 </td>
                 <td>{o.ownerBtcAddress ? <code>{o.ownerBtcAddress}</code> : <span className="muted small">Not set</span>}</td>
-                <td>
-                  <StatusPill status={o.status} />
-                </td>
                 <td>{o.requestedBy || "agent"}</td>
                 <td>{new Date(o.updatedAt || o.createdAt).toLocaleString()}</td>
-                {canApprove && (
-                  <td>
-                    {o.status === "pending" && (
-                      <div className="btn-group">
-                        <input
-                          type="text"
-                          className="input"
-                          placeholder="Owner BTC address"
-                          value={ownerBtcAddress}
-                          onChange={(e) => setOwnerBtcAddress(e.target.value)}
-                          style={{ marginBottom: "6px" }}
-                        />
-                        <button className="btn btn-secondary" onClick={() => changeStatus(o.id, "approved")}>
-                          Approve
-                        </button>
-                        <button className="btn btn-danger" onClick={() => changeStatus(o.id, "rejected")}>
-                          Reject
-                        </button>
-                      </div>
-                    )}
-                    {o.status !== "pending" && (
-                      <span className="muted small">No actions</span>
-                    )}
-                  </td>
-                )}
               </tr>
             ))}
           </tbody>
