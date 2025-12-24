@@ -49,10 +49,37 @@ export default function Dashboard() {
     load();
   }, []);
 
-  const series = useMemo(() => data?.series?.daily || [], [data]);
-  const kpis = data?.kpis || {};
-  const sessions = data?.sessions || {};
-  const recent = data?.recent || {};
+  // Map backend range report to UI-friendly shape
+  const period = data?.period || {};
+  const vouchers = data?.vouchers || {};
+  const players = data?.players || {};
+  const tx = data?.transactions || {};
+  const games = data?.games || {};
+  const summary = data?.summary || {};
+
+  const kpis = {
+    totalPlayers: players.active || 0,
+    activePlayers: players.active || 0,
+    newPlayers24h: players.new || 0,
+    walletTotal: summary.totalCredits || 0,
+    credits24h: vouchers.redeemed?.totalAmount || 0,
+    ggr24h: games.ggr || tx.aggregates?.netGame || 0,
+    betAmount24h: tx.aggregates?.gameBetTotal || 0,
+    voucherAmount24h: vouchers.issued?.totalAmount || 0,
+    voucherBonus24h: vouchers.issued?.totalBonus || 0,
+    debits24h: summary.totalDebits || 0,
+  };
+
+  const sessions = {
+    activePlayers: players.active || 0,
+    activeStaff: 0,
+  };
+
+  const recent = {
+    staffSessions: [],
+  };
+
+  const series = useMemo(() => games.byGame || [], [games]);
 
   return (
     <div className="page">
@@ -86,22 +113,22 @@ export default function Dashboard() {
           </div>
           <div className="stat-card">
             <div className="stat-label">Wallet Float</div>
-            <div className="stat-value">${fmtNumber(kpis.walletTotal)}</div>
-            <div className="stat-meta">Credits 24h: ${fmtNumber(kpis.credits24h)}</div>
+            <div className="stat-value">{fmtNumber(kpis.walletTotal)}</div>
+            <div className="stat-meta">Credits 24h: {fmtNumber(kpis.credits24h)}</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">GGR (24h)</div>
-            <div className="stat-value">${fmtNumber(kpis.ggr24h)}</div>
-            <div className="stat-meta">Bets: ${fmtNumber(kpis.betAmount24h)}</div>
+            <div className="stat-value">{fmtNumber(kpis.ggr24h)}</div>
+            <div className="stat-meta">Bets: {fmtNumber(kpis.betAmount24h)}</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Voucher Volume</div>
-            <div className="stat-value">${fmtNumber(kpis.voucherAmount24h)}</div>
-            <div className="stat-meta">Bonus: ${fmtNumber(kpis.voucherBonus24h)}</div>
+            <div className="stat-value">{fmtNumber(kpis.voucherAmount24h)}</div>
+            <div className="stat-meta">Bonus: {fmtNumber(kpis.voucherBonus24h)}</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Debits (24h)</div>
-            <div className="stat-value">${fmtNumber(kpis.debits24h)}</div>
+            <div className="stat-value">{fmtNumber(kpis.debits24h)}</div>
             <div className="stat-meta">Staff sessions: {fmtNumber(sessions.activeStaff, 0)}</div>
           </div>
         </div>
@@ -119,7 +146,7 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={series}>
                 <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
-                <XAxis dataKey="date" stroke="rgba(202,210,224,0.6)" />
+                <XAxis dataKey="game" stroke="rgba(202,210,224,0.6)" />
                 <YAxis stroke="rgba(202,210,224,0.6)" />
                 <Tooltip
                   contentStyle={{
@@ -129,8 +156,8 @@ export default function Dashboard() {
                     color: "#f4f6fa",
                   }}
                 />
-                <Line type="monotone" dataKey="betAmount" stroke="#27d9ff" strokeWidth={2} />
-                <Line type="monotone" dataKey="winAmount" stroke="#ff304f" strokeWidth={2} />
+                <Line type="monotone" dataKey="totalBet" stroke="#27d9ff" strokeWidth={2} />
+                <Line type="monotone" dataKey="totalWin" stroke="#ff304f" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </div>
