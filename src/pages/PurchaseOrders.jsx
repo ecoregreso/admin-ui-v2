@@ -31,11 +31,11 @@ export default function PurchaseOrders() {
   const [actionState, setActionState] = useState({});
 
   const statusLabels = {
-    pending: "Pending (owner to share wallet)",
-    approved: "Wallet shared (agent send BTC)",
-    awaiting_credit: "Awaiting FUN credit",
-    completed: "FUN credited (agent confirm)",
-    acknowledged: "Complete",
+    pending: "Step 1: Pending (owner shares wallet)",
+    approved: "Step 2: Wallet shared (agent sends BTC)",
+    awaiting_credit: "Step 3: Awaiting FUN credit",
+    completed: "Step 4: FUN credited (agent confirms)",
+    acknowledged: "Step 5: Complete",
   };
 
   const isFinance = useMemo(
@@ -386,7 +386,7 @@ export default function PurchaseOrders() {
                     <div className="order-actions">
                       {isFinance && o.status === "pending" && (
                         <div className="action-block">
-                          <label className="small">Share wallet & approve</label>
+                          <label className="small">Step 1: Share wallet & approve</label>
                           <input
                             className="input"
                             placeholder="bc1..."
@@ -400,14 +400,14 @@ export default function PurchaseOrders() {
                             onChange={(e) => updateAction(o.id, "approveNote", e.target.value)}
                           />
                           <button className="btn" type="button" onClick={() => doApprove(o)}>
-                            Send address & approve
+                            Step 1: Send address & approve
                           </button>
                         </div>
                       )}
 
                       {!isFinance && o.status === "approved" && (
                         <div className="action-block">
-                          <label className="small">Submit BTC confirmation</label>
+                          <label className="small">Step 2: Submit BTC confirmation</label>
                           <input
                             className="input"
                             placeholder="Tx hash / reference"
@@ -421,14 +421,14 @@ export default function PurchaseOrders() {
                             onChange={(e) => updateAction(o.id, "confirmationNote", e.target.value)}
                           />
                           <button className="btn" type="button" onClick={() => doConfirm(o)}>
-                            Submit confirmation
+                            Step 2: Submit confirmation
                           </button>
                         </div>
                       )}
 
                       {isFinance && o.status === "awaiting_credit" && (
                         <div className="action-block">
-                          <label className="small">Mark FUN credited</label>
+                          <label className="small">Step 3: Mark FUN credited</label>
                           <input
                             className="input"
                             placeholder="Optional note"
@@ -436,14 +436,14 @@ export default function PurchaseOrders() {
                             onChange={(e) => updateAction(o.id, "creditNote", e.target.value)}
                           />
                           <button className="btn" type="button" onClick={() => doMarkCredited(o)}>
-                            Mark credited
+                            Step 3: Mark credited
                           </button>
                         </div>
                       )}
 
                       {!isFinance && o.status === "completed" && (
                         <div className="action-block">
-                          <label className="small">Confirm FUN received</label>
+                          <label className="small">Step 4: Confirm FUN received</label>
                           <input
                             className="input"
                             placeholder="Optional note"
@@ -451,7 +451,7 @@ export default function PurchaseOrders() {
                             onChange={(e) => updateAction(o.id, "ackNote", e.target.value)}
                           />
                           <button className="btn" type="button" onClick={() => doAcknowledge(o)}>
-                            Credits received
+                            Step 4: Credits received
                           </button>
                         </div>
                       )}
