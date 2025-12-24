@@ -66,6 +66,7 @@ export default function PlayersList() {
 
   useEffect(() => {
     loadPlayers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleSelectPlayer(id) {

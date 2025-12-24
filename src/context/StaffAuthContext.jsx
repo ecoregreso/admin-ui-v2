@@ -1,4 +1,5 @@
 // src/context/StaffAuthContext.jsx
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/client";
 
@@ -64,7 +65,7 @@ export function StaffAuthProvider({ children }) {
   async function logout() {
     try {
       await api.post("/api/v1/staff/logout");
-    } catch (err) {
+    } catch {
       // ignore logout errors
     }
     setStaff(null);

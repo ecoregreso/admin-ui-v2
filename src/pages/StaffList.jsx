@@ -97,6 +97,7 @@ export default function StaffList() {
 
   useEffect(() => {
     loadStaff();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const selectedStaff = useMemo(() => staff.find((s) => s.id === selectedId) || null, [staff, selectedId]);

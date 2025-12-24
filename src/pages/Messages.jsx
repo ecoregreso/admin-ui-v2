@@ -214,7 +214,7 @@ export default function Messages() {
       });
       const parsed = JSON.parse(plaintext);
       return parsed.body || plaintext;
-    } catch (err) {
+    } catch {
       return "[Cannot decrypt]";
     }
   }
@@ -315,7 +315,7 @@ function MessageRow({ msg, isMe, decrypt }) {
     return () => {
       mounted = false;
     };
-  }, [msg.id]);
+  }, [msg.id, decrypt]);
 
   return (
     <div

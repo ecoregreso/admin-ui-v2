@@ -50,11 +50,10 @@ export default function Dashboard() {
   }, []);
 
   // Map backend range report to UI-friendly shape
-  const period = data?.period || {};
   const vouchers = data?.vouchers || {};
   const players = data?.players || {};
   const tx = data?.transactions || {};
-  const games = data?.games || {};
+  const games = React.useMemo(() => data?.games || {}, [data]);
   const summary = data?.summary || {};
 
   const kpis = {

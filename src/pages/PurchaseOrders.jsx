@@ -77,6 +77,7 @@ export default function PurchaseOrders() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleSubmit(e) {
@@ -96,7 +97,7 @@ export default function PurchaseOrders() {
     }
 
     try {
-      const res = await createOrder({
+      await createOrder({
         funAmount: amountNum,
         btcAmount: btcNum,
         btcRate: Number(btcRate) || null,
