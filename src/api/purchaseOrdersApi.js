@@ -29,3 +29,28 @@ export async function postMessage(orderId, body) {
   const res = await api.post(`/api/v1/purchase-orders/${orderId}/messages`, { body });
   return res.data; // { ok, message }
 }
+
+export async function approveOrder(orderId, payload) {
+  const res = await api.post(`/api/v1/purchase-orders/${orderId}/approve`, payload);
+  return res.data; // { ok, order }
+}
+
+export async function confirmPayment(orderId, payload) {
+  const res = await api.post(`/api/v1/purchase-orders/${orderId}/confirm-payment`, payload);
+  return res.data; // { ok, order }
+}
+
+export async function markCredited(orderId, payload) {
+  const res = await api.post(`/api/v1/purchase-orders/${orderId}/mark-credited`, payload);
+  return res.data; // { ok, order }
+}
+
+export async function acknowledgeOrder(orderId, payload) {
+  const res = await api.post(`/api/v1/purchase-orders/${orderId}/acknowledge`, payload);
+  return res.data; // { ok, order }
+}
+
+export async function deleteOrder(orderId) {
+  const res = await api.delete(`/api/v1/purchase-orders/${orderId}`);
+  return res.data; // { ok }
+}

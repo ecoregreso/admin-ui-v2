@@ -7,6 +7,11 @@ import {
   setOwnerAddress,
   listMessages,
   postMessage,
+  approveOrder,
+  confirmPayment,
+  markCredited,
+  acknowledgeOrder,
+  deleteOrder,
 } from "../api/purchaseOrdersApi.js";
 
 export default function PurchaseOrders() {
@@ -28,6 +33,20 @@ export default function PurchaseOrders() {
   );
   const [messagesByOrder, setMessagesByOrder] = useState({});
   const [newMessage, setNewMessage] = useState({});
+  const [actionState, setActionState] = useState({});
+
+  const statusLabels = {
+    pending: "Pending (owner to share wallet)",
+    approved: "Wallet shared (agent send BTC)",
+    awaiting_credit: "Awaiting FUN credit",
+    completed: "FUN credited (agent confirm)",
+    acknowledged: "Closed",
+  };
+
+  const isFinance = useMemo(
+    () => (staff?.permissions || []).includes("finance:write"),
+    [staff]
+  );
 
   async function load() {
     setLoading(true);
@@ -40,6 +59,13 @@ export default function PurchaseOrders() {
       // preload messages for visible orders
       for (const o of data.orders || []) {
         await loadMessages(o.id);
+        setActionState((prev) => ({
+          ...prev,
+          [o.id]: {
+            ...(prev[o.id] || {}),
+            approveAddress: prev[o.id]?.approveAddress || o.ownerBtcAddress || addrRes?.ownerBtcAddress || "",
+          },
+        }));
       }
     } catch (e) {
       console.error(e);
@@ -68,10 +94,6 @@ export default function PurchaseOrders() {
       setError("Enter a BTC amount greater than 0.");
       return;
     }
-    if (!ownerBtcAddress.trim()) {
-      setError("Owner BTC address is required.");
-      return;
-    }
 
     try {
       const res = await createOrder({
@@ -79,18 +101,12 @@ export default function PurchaseOrders() {
         btcAmount: btcNum,
         btcRate: Number(btcRate) || null,
         note: note.trim(),
-        requestedBy: staff?.username || "agent",
-        ownerBtcAddress: ownerBtcAddress.trim(),
       });
-      // post an automatic message with the note if present
-      if (note.trim()) {
-        await postMessage(res.order.id, note.trim());
-      }
       setFunAmount("");
       setBtcAmount("");
       setBtcRate("");
       setNote("");
-      setSuccess("Order submitted. Send BTC to the owner address shown below.");
+      setSuccess("Order submitted. Waiting for owner to share a wallet address.");
       await load();
     } catch (e) {
       console.error(e);
@@ -126,6 +142,13 @@ export default function PurchaseOrders() {
     setOwnerAddress(addr);
   }
 
+  function updateAction(orderId, field, value) {
+    setActionState((prev) => ({
+      ...prev,
+      [orderId]: { ...(prev[orderId] || {}), [field]: value },
+    }));
+  }
+
   async function loadMessages(orderId) {
     try {
       const res = await listMessages(orderId);
@@ -147,14 +170,88 @@ export default function PurchaseOrders() {
     }
   }
 
+  async function doApprove(order) {
+    const addr =
+      (actionState[order.id]?.approveAddress || "").trim() ||
+      ownerBtcAddress.trim();
+    if (!addr) {
+      setError("Wallet address required to approve.");
+      return;
+    }
+    try {
+      setError("");
+      await approveOrder(order.id, {
+        ownerBtcAddress: addr,
+        note: actionState[order.id]?.approveNote || "",
+      });
+      await load();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to approve order.");
+    }
+  }
+
+  async function doConfirm(order) {
+    const code = (actionState[order.id]?.confirmationCode || "").trim();
+    if (!code) {
+      setError("Confirmation is required.");
+      return;
+    }
+    try {
+      setError("");
+      await confirmPayment(order.id, {
+        confirmationCode: code,
+        note: actionState[order.id]?.confirmationNote || "",
+      });
+      await load();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to submit confirmation.");
+    }
+  }
+
+  async function doMarkCredited(order) {
+    try {
+      setError("");
+      await markCredited(order.id, { note: actionState[order.id]?.creditNote || "" });
+      await load();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to mark credited.");
+    }
+  }
+
+  async function doAcknowledge(order) {
+    try {
+      setError("");
+      await acknowledgeOrder(order.id, { note: actionState[order.id]?.ackNote || "" });
+      await load();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to confirm receipt.");
+    }
+  }
+
+  async function doDelete(order) {
+    if (!window.confirm("Delete this order and its thread?")) return;
+    try {
+      setError("");
+      await deleteOrder(order.id);
+      await load();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to delete order.");
+    }
+  }
+
   return (
     <div className="panel">
       <div className="panel-header">
         <div>
           <h2 className="panel-title">Funcoin Purchase (BTC)</h2>
           <p className="panel-subtitle">
-            Agents/Operators enter FUN amount → auto BTC conversion → submit to see the owner BTC address for payment.
-            Single-step flow; no approval queue. Owner can update the BTC address below.
+            Multi-step flow: Agent submits request → Owner shares wallet → Agent posts confirmation →
+            Owner credits FUN → Agent confirms receipt. Thread shows the history.
           </p>
         </div>
       </div>
@@ -243,7 +340,7 @@ export default function PurchaseOrders() {
           <div>
             <h3 className="panel-title">Owner BTC Address</h3>
             <p className="panel-subtitle">
-              Agents copy this address after submitting. Owner can update it below.
+              Default address owners can keep on file. Each order is approved with an address inside its thread.
             </p>
           </div>
         </div>
@@ -271,7 +368,9 @@ export default function PurchaseOrders() {
               <th>Request ID</th>
               <th>FUN</th>
               <th>BTC</th>
-              <th>Owner BTC</th>
+              <th>Status</th>
+              <th>Wallet</th>
+              <th>Confirmation</th>
               <th>Requested By</th>
               <th>Updated</th>
               <th>Thread</th>
@@ -295,11 +394,111 @@ export default function PurchaseOrders() {
                     <div className="muted small">Rate: {Number(o.btcRate).toLocaleString()} FUN / BTC</div>
                   ) : null}
                 </td>
-                <td>{o.ownerBtcAddress ? <code>{o.ownerBtcAddress}</code> : <span className="muted small">Not set</span>}</td>
+                <td>
+                  <div className="badge">{statusLabels[o.status] || o.status}</div>
+                </td>
+                <td>
+                  {o.ownerBtcAddress ? (
+                    <div className="wallet-cell">
+                      <code>{o.ownerBtcAddress}</code>
+                      <button
+                        className="btn btn-secondary"
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(o.ownerBtcAddress)}
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="muted small">Pending</span>
+                  )}
+                </td>
+                <td>{o.confirmationCode || <span className="muted small">—</span>}</td>
                 <td>{o.requestedBy || "agent"}</td>
                 <td>{new Date(o.updatedAt || o.createdAt).toLocaleString()}</td>
                 <td>
                   <div className="thread">
+                    <div className="order-actions">
+                      {isFinance && o.status === "pending" && (
+                        <div className="action-block">
+                          <label className="small">Share wallet & approve</label>
+                          <input
+                            className="input"
+                            placeholder="bc1..."
+                            value={actionState[o.id]?.approveAddress || ""}
+                            onChange={(e) => updateAction(o.id, "approveAddress", e.target.value)}
+                          />
+                          <input
+                            className="input"
+                            placeholder="Optional note"
+                            value={actionState[o.id]?.approveNote || ""}
+                            onChange={(e) => updateAction(o.id, "approveNote", e.target.value)}
+                          />
+                          <button className="btn" type="button" onClick={() => doApprove(o)}>
+                            Send address & approve
+                          </button>
+                        </div>
+                      )}
+
+                      {!isFinance && o.status === "approved" && (
+                        <div className="action-block">
+                          <label className="small">Submit BTC confirmation</label>
+                          <input
+                            className="input"
+                            placeholder="Tx hash / reference"
+                            value={actionState[o.id]?.confirmationCode || ""}
+                            onChange={(e) => updateAction(o.id, "confirmationCode", e.target.value)}
+                          />
+                          <input
+                            className="input"
+                            placeholder="Optional note"
+                            value={actionState[o.id]?.confirmationNote || ""}
+                            onChange={(e) => updateAction(o.id, "confirmationNote", e.target.value)}
+                          />
+                          <button className="btn" type="button" onClick={() => doConfirm(o)}>
+                            Submit confirmation
+                          </button>
+                        </div>
+                      )}
+
+                      {isFinance && o.status === "awaiting_credit" && (
+                        <div className="action-block">
+                          <label className="small">Mark FUN credited</label>
+                          <input
+                            className="input"
+                            placeholder="Optional note"
+                            value={actionState[o.id]?.creditNote || ""}
+                            onChange={(e) => updateAction(o.id, "creditNote", e.target.value)}
+                          />
+                          <button className="btn" type="button" onClick={() => doMarkCredited(o)}>
+                            Mark credited
+                          </button>
+                        </div>
+                      )}
+
+                      {!isFinance && o.status === "completed" && (
+                        <div className="action-block">
+                          <label className="small">Confirm FUN received</label>
+                          <input
+                            className="input"
+                            placeholder="Optional note"
+                            value={actionState[o.id]?.ackNote || ""}
+                            onChange={(e) => updateAction(o.id, "ackNote", e.target.value)}
+                          />
+                          <button className="btn" type="button" onClick={() => doAcknowledge(o)}>
+                            Credits received
+                          </button>
+                        </div>
+                      )}
+
+                      {isFinance && (
+                        <div className="action-block">
+                          <button className="btn btn-secondary" type="button" onClick={() => doDelete(o)}>
+                            Delete order
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     <div className="thread-messages">
                       {(messagesByOrder[o.id] || []).map((m) => (
                         <div key={m.id} className="thread-message">
