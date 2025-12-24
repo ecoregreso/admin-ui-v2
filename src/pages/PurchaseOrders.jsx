@@ -3,8 +3,10 @@ import { useStaffAuth } from "../context/StaffAuthContext.jsx";
 import {
   listOrders,
   createOrder,
-  getOwnerBtcAddress,
-  setOwnerBtcAddress,
+  getOwnerAddress,
+  setOwnerAddress,
+  listMessages,
+  postMessage,
 } from "../api/purchaseOrdersApi.js";
 
 export default function PurchaseOrders() {
@@ -19,19 +21,26 @@ export default function PurchaseOrders() {
   const [btcRate, setBtcRate] = useState(""); // FUN per BTC (1 FUN ≈ 1 USD)
   const [note, setNote] = useState("");
 
-  const [ownerBtcAddress, setOwnerBtcAddressState] = useState(getOwnerBtcAddress());
+  const [ownerBtcAddress, setOwnerBtcAddressState] = useState("");
   const canManageOwnerAddr = useMemo(
     () => (staff?.permissions || []).includes("finance:write"),
     [staff]
   );
+  const [messagesByOrder, setMessagesByOrder] = useState({});
+  const [newMessage, setNewMessage] = useState({});
 
   async function load() {
     setLoading(true);
     setError("");
     try {
       const data = await listOrders();
-      setOrders(data);
-      setOwnerBtcAddressState(getOwnerBtcAddress());
+      setOrders(data.orders || []);
+      const addrRes = await getOwnerAddress();
+      setOwnerBtcAddressState(addrRes?.ownerBtcAddress || "");
+      // preload messages for visible orders
+      for (const o of data.orders || []) {
+        await loadMessages(o.id);
+      }
     } catch (e) {
       console.error(e);
       setError("Failed to load purchase orders.");
@@ -65,7 +74,7 @@ export default function PurchaseOrders() {
     }
 
     try {
-      await createOrder({
+      const res = await createOrder({
         funAmount: amountNum,
         btcAmount: btcNum,
         btcRate: Number(btcRate) || null,
@@ -73,6 +82,10 @@ export default function PurchaseOrders() {
         requestedBy: staff?.username || "agent",
         ownerBtcAddress: ownerBtcAddress.trim(),
       });
+      // post an automatic message with the note if present
+      if (note.trim()) {
+        await postMessage(res.order.id, note.trim());
+      }
       setFunAmount("");
       setBtcAmount("");
       setBtcRate("");
@@ -110,7 +123,28 @@ export default function PurchaseOrders() {
 
   function updateOwnerAddress(addr) {
     setOwnerBtcAddressState(addr);
-    setOwnerBtcAddress(addr);
+    setOwnerAddress(addr);
+  }
+
+  async function loadMessages(orderId) {
+    try {
+      const res = await listMessages(orderId);
+      setMessagesByOrder((prev) => ({ ...prev, [orderId]: res.messages || [] }));
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function sendMessage(orderId, body) {
+    if (!body.trim()) return;
+    try {
+      await postMessage(orderId, body.trim());
+      await loadMessages(orderId);
+      setNewMessage((prev) => ({ ...prev, [orderId]: "" }));
+    } catch (err) {
+      console.error(err);
+      setError("Failed to send message.");
+    }
   }
 
   return (
@@ -240,12 +274,13 @@ export default function PurchaseOrders() {
               <th>Owner BTC</th>
               <th>Requested By</th>
               <th>Updated</th>
+              <th>Thread</th>
             </tr>
           </thead>
           <tbody>
             {orders.length === 0 && (
               <tr>
-                <td colSpan={6} className="muted">
+                <td colSpan={7} className="muted">
                   No purchase requests yet.
                 </td>
               </tr>
@@ -263,6 +298,35 @@ export default function PurchaseOrders() {
                 <td>{o.ownerBtcAddress ? <code>{o.ownerBtcAddress}</code> : <span className="muted small">Not set</span>}</td>
                 <td>{o.requestedBy || "agent"}</td>
                 <td>{new Date(o.updatedAt || o.createdAt).toLocaleString()}</td>
+                <td>
+                  <div className="thread">
+                    <div className="thread-messages">
+                      {(messagesByOrder[o.id] || []).map((m) => (
+                        <div key={m.id} className="thread-message">
+                          <div className="thread-meta">
+                            <strong>{m.sender}</strong>{" "}
+                            <span className="muted small">{new Date(m.createdAt).toLocaleString()}</span>
+                          </div>
+                          <div>{m.body}</div>
+                        </div>
+                      ))}
+                      {!(messagesByOrder[o.id] || []).length && (
+                        <div className="muted small">No messages yet.</div>
+                      )}
+                    </div>
+                    <div className="thread-input">
+                      <input
+                        className="input"
+                        placeholder="Type a message (e.g., owner BTC address reply)..."
+                        value={newMessage[o.id] || ""}
+                        onChange={(e) => setNewMessage((prev) => ({ ...prev, [o.id]: e.target.value }))}
+                      />
+                      <button className="btn btn-secondary" onClick={() => sendMessage(o.id, newMessage[o.id] || "")}>
+                        Send
+                      </button>
+                    </div>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
