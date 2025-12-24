@@ -4,7 +4,6 @@ import {
   listOrders,
   createOrder,
   getOwnerAddress,
-  setOwnerAddress,
   listMessages,
   postMessage,
   approveOrder,
@@ -27,10 +26,6 @@ export default function PurchaseOrders() {
   const [note, setNote] = useState("");
 
   const [ownerBtcAddress, setOwnerBtcAddressState] = useState("");
-  const canManageOwnerAddr = useMemo(
-    () => (staff?.permissions || []).includes("finance:write"),
-    [staff]
-  );
   const [messagesByOrder, setMessagesByOrder] = useState({});
   const [newMessage, setNewMessage] = useState({});
   const [actionState, setActionState] = useState({});
@@ -40,7 +35,7 @@ export default function PurchaseOrders() {
     approved: "Wallet shared (agent send BTC)",
     awaiting_credit: "Awaiting FUN credit",
     completed: "FUN credited (agent confirm)",
-    acknowledged: "Closed",
+    acknowledged: "Complete",
   };
 
   const isFinance = useMemo(
@@ -136,11 +131,6 @@ export default function PurchaseOrders() {
       console.error(err);
       setError("Could not fetch BTC rate.");
     }
-  }
-
-  function updateOwnerAddress(addr) {
-    setOwnerBtcAddressState(addr);
-    setOwnerAddress(addr);
   }
 
   function updateAction(orderId, field, value) {
@@ -335,32 +325,6 @@ export default function PurchaseOrders() {
           </button>
         </div>
       </form>
-
-      <div className="panel" style={{ marginTop: "12px" }}>
-        <div className="panel-header">
-          <div>
-            <h3 className="panel-title">Owner BTC Address</h3>
-            <p className="panel-subtitle">
-              Default address owners can keep on file. Each order is approved with an address inside its thread.
-            </p>
-          </div>
-        </div>
-        <div className="form-grid">
-          <div className="field span-2">
-            <label>Current Owner BTC Address</label>
-            <input
-              className="input"
-              value={ownerBtcAddress}
-              onChange={(e) => updateOwnerAddress(e.target.value)}
-              disabled={!canManageOwnerAddr}
-              placeholder="bc1..."
-            />
-            {!canManageOwnerAddr && (
-              <div className="muted small">View-only. Finance can update this.</div>
-            )}
-          </div>
-        </div>
-      </div>
 
       <div className="table-wrap">
         <table className="table">
