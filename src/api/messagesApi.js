@@ -43,3 +43,15 @@ export async function deleteMessage(id) {
   const res = await api.delete(`/api/v1/staff/messaging/messages/${id}`);
   return res.data;
 }
+
+export async function deleteThread(threadId) {
+  const res = await api.delete(
+    `/api/v1/staff/messaging/messages/thread/${encodeURIComponent(threadId)}`
+  );
+  return res.data;
+}
+
+export async function deleteInbox() {
+  const res = await api.delete(`/api/v1/staff/messaging/messages/inbox`);
+  return res.data;
+}

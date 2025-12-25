@@ -7,6 +7,8 @@ import {
   listMessages,
   markMessageRead,
   deleteMessage as apiDeleteMessage,
+  deleteThread,
+  deleteInbox,
 } from "../api/messagesApi";
 import { useStaffAuth } from "../context/StaffAuthContext.jsx";
 
@@ -456,6 +458,26 @@ export default function Messages() {
                 </div>
               </button>
             ))}
+            {threadList.length > 0 && (
+              <div className="flex gap-2">
+                <button
+                  className="btn-secondary w-full"
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await deleteInbox();
+                      setMessages([]);
+                      setThreadList([]);
+                    } catch (err) {
+                      console.error(err);
+                      setError("Failed to delete inbox");
+                    }
+                  }}
+                >
+                  Delete inbox
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -485,6 +507,36 @@ export default function Messages() {
                   }}
                 />
               ))}
+              {messages.length > 0 && target.trim() && (
+                <div className="flex gap-2">
+                  <button
+                    className="btn-secondary"
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const threadId =
+                          messages[0]?.threadId ||
+                          (messages[0]
+                            ? `thread:${[messages[0].fromId, messages[0].toId]
+                                .sort((a, b) => a - b)
+                                .join(":")}`
+                            : null);
+                        if (!threadId) return;
+                        await deleteThread(threadId);
+                        setMessages([]);
+                        setThreadList((prev) =>
+                          prev.filter((t) => t.threadId !== threadId)
+                        );
+                      } catch (err) {
+                        console.error(err);
+                        setError("Failed to delete thread");
+                      }
+                    }}
+                  >
+                    Delete thread
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
