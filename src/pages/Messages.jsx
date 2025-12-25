@@ -151,11 +151,10 @@ export default function Messages() {
   }
 
   async function loadMessages(username) {
-    if (!username) return;
     setLoading(true);
     setError("");
     try {
-      const res = await listMessages({ withUser: username });
+      const res = await listMessages(username ? { withUser: username } : {});
       setMessages(res.messages || []);
       // Mark unread addressed to me
       for (const m of res.messages || []) {
@@ -170,6 +169,14 @@ export default function Messages() {
       setLoading(false);
     }
   }
+
+  // Auto-populate inbox on sign-in / page open
+  useEffect(() => {
+    if (staff?.id) {
+      loadMessages(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staff?.id]);
 
   async function handleSend(e) {
     e.preventDefault();
@@ -279,13 +286,14 @@ export default function Messages() {
       <div className="card">
         <div className="card-title">Thread</div>
         <div className="card-subtext">
-          Enter a username above and click “Send” or “Load” to view the conversation.
+          Inbox auto-loads on open. Enter a username and click “Send” or “Load” to view a specific
+          thread.
         </div>
         <div className="mt-3">
           <button
             className="btn-secondary"
-            onClick={() => loadMessages(target.trim())}
-            disabled={!target.trim() || loading}
+            onClick={() => loadMessages(target.trim() || null)}
+            disabled={loading}
           >
             {loading ? "Loading..." : "Load thread"}
           </button>
