@@ -212,6 +212,7 @@ export default function VouchersList() {
                 <th>Created</th>
                 <th>Voucher</th>
                 <th>User Code</th>
+                <th>PIN</th>
                 <th>Amount</th>
                 <th>Bonus</th>
                 <th>Cur</th>
@@ -236,6 +237,7 @@ export default function VouchersList() {
                     <td>{fmtDate(v.createdAt)}</td>
                     <td>{v.code}</td>
                     <td>{userCode}</td>
+                    <td>{v.pin || "-"}</td>
                     <td>${fmt(v.amount)}</td>
                     <td>${fmt(v.bonusAmount)}</td>
                     <td>{v.currency}</td>
@@ -260,7 +262,7 @@ export default function VouchersList() {
               })}
               {!filtered.length && !loading && (
                 <tr>
-                  <td colSpan={9} className="empty">
+                  <td colSpan={10} className="empty">
                     No vouchers found.
                   </td>
                 </tr>
