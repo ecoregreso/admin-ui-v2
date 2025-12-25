@@ -297,6 +297,8 @@ export default function Messages() {
               key={m.id}
               msg={m}
               isMe={m.fromId === staff?.id}
+              fromLabel={m.fromId === staff?.id ? "You" : m.fromUsername || m.fromId}
+              toLabel={m.toId === staff?.id ? "You" : m.toUsername || m.toId}
               decrypt={() => renderBody(m)}
             />
           ))}
@@ -306,7 +308,7 @@ export default function Messages() {
   );
 }
 
-function MessageRow({ msg, isMe, decrypt }) {
+function MessageRow({ msg, isMe, decrypt, fromLabel, toLabel }) {
   const [body, setBody] = useState("[Decrypting...]");
 
   useEffect(() => {
@@ -326,7 +328,10 @@ function MessageRow({ msg, isMe, decrypt }) {
       }}
     >
       <div className="flex justify-between text-xs text-slate-400 mb-1">
-        <span>{isMe ? "You" : "Them"}</span>
+        <div className="flex gap-2">
+          <span>From: <strong>{fromLabel || "Unknown"}</strong></span>
+          <span>To: <strong>{toLabel || "Unknown"}</strong></span>
+        </div>
         <span>{new Date(msg.createdAt).toLocaleString()}</span>
       </div>
       <div className="text-sm text-slate-100 whitespace-pre-wrap break-words">{body}</div>
