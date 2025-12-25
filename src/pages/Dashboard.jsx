@@ -70,12 +70,15 @@ export default function Dashboard() {
   };
 
   const sessions = {
-    activePlayers: players.active || 0,
-    activeStaff: 0,
+    activePlayers: data?.sessions?.activePlayers ?? players.active ?? 0,
+    activeStaff: data?.sessions?.activeStaff ?? 0,
+    staffSessions: data?.sessions?.staffSessions || [],
   };
 
   const recent = {
-    staffSessions: [],
+    transactions: data?.recent?.transactions || [],
+    vouchers: data?.recent?.vouchers || [],
+    rounds: data?.recent?.rounds || [],
   };
 
   const series = useMemo(() => games.byGame || [], [games]);
@@ -184,14 +187,14 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(recent.staffSessions || []).map((s) => (
+                  {(sessions.staffSessions || []).map((s) => (
                     <tr key={s.id}>
                       <td>{String(s.userId).slice(0, 10)}</td>
                       <td>{s.role}</td>
                       <td>{fmtDate(s.lastSeenAt || s.createdAt)}</td>
                     </tr>
                   ))}
-                  {!recent.staffSessions?.length && (
+                  {!sessions.staffSessions?.length && (
                     <tr>
                       <td colSpan={3} className="empty">
                         No staff sessions yet.

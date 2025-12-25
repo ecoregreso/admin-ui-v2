@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { listPlayers, getPlayer, adjustPlayerBalance } from "../api/playersApi";
+import {
+  listPlayers,
+  getPlayer,
+  adjustPlayerBalance,
+  getPlayerTransactions,
+  getPlayerRounds,
+  getPlayerSessions,
+} from "../api/playersApi";
 
 function formatNumber(n) {
   if (n == null) return "0";
@@ -50,12 +57,24 @@ export default function PlayersList() {
     setDetailLoading(true);
     setError("");
     try {
-      const data = await getPlayer(id);
-      if (data.ok) {
-        setDetail(data);
-      } else {
-        setError(data.error || "Failed to load player");
+      const [playerRes, txRes, roundsRes, sessionsRes] = await Promise.all([
+        getPlayer(id),
+        getPlayerTransactions(id, { limit: 50 }),
+        getPlayerRounds(id, { limit: 200 }),
+        getPlayerSessions(id, { limit: 200 }),
+      ]);
+
+      if (!playerRes?.ok) {
+        setError(playerRes?.error || "Failed to load player");
+        return;
       }
+
+      setDetail({
+        player: playerRes.player,
+        transactions: txRes?.ok ? txRes.transactions || [] : [],
+        rounds: roundsRes?.ok ? roundsRes.rounds || [] : [],
+        sessions: sessionsRes?.ok ? sessionsRes.sessions || [] : [],
+      });
     } catch (err) {
       console.error("[PlayersList] getPlayer error:", err);
       setError("Failed to load player");
@@ -108,6 +127,9 @@ export default function PlayersList() {
   const transactions = detail?.transactions || [];
   const rounds = detail?.rounds || [];
   const sessions = detail?.sessions || [];
+  const playerStatus =
+    playerInfo?.status ?? (playerInfo?.isActive ? "active" : "inactive");
+  const isActive = playerInfo?.isActive ?? playerStatus === "active";
 
   return (
     <div className="page">
@@ -161,19 +183,23 @@ export default function PlayersList() {
                 </tr>
               </thead>
               <tbody>
-                {players.map((p) => (
-                  <tr
-                    key={p.id}
-                    className={p.id === selectedId ? "table-row-active" : undefined}
-                    onClick={() => handleSelectPlayer(p.id)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td>{String(p.id).slice(0, 8)}</td>
-                    <td>{p.userCode}</td>
-                    <td>${formatNumber(p.balance)}</td>
-                    <td>{p.isActive ? "active" : "inactive"}</td>
-                  </tr>
-                ))}
+                {players.map((p) => {
+                  const statusLabel =
+                    p.status ?? (p.isActive ? "active" : "inactive");
+                  return (
+                    <tr
+                      key={p.id}
+                      className={p.id === selectedId ? "table-row-active" : undefined}
+                      onClick={() => handleSelectPlayer(p.id)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <td>{String(p.id).slice(0, 8)}</td>
+                      <td>{p.userCode}</td>
+                      <td>${formatNumber(p.balance)}</td>
+                      <td>{statusLabel}</td>
+                    </tr>
+                  );
+                })}
                 {!players.length && !loading && (
                   <tr>
                     <td colSpan={4} className="empty">
@@ -213,7 +239,7 @@ export default function PlayersList() {
                 </div>
                 <div>
                   <div className="stat-label">Status</div>
-                  <div className="stat-value">{playerInfo.isActive ? "active" : "inactive"}</div>
+                  <div className="stat-value">{isActive ? "active" : "inactive"}</div>
                 </div>
               </div>
 

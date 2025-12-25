@@ -34,3 +34,10 @@ export async function getPlayerRounds(id, { limit = 50 } = {}) {
   });
   return res.data;
 }
+
+export async function getPlayerSessions(id, { limit = 200 } = {}) {
+  const res = await api.get(`/api/v1/admin/players/${id}/sessions`, {
+    params: { limit },
+  });
+  return res.data;
+}
