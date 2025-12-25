@@ -33,3 +33,8 @@ export async function markMessageRead(id) {
   const res = await api.post(`/api/v1/staff/messaging/messages/${id}/read`);
   return res.data;
 }
+
+export async function deleteMessage(id) {
+  const res = await api.delete(`/api/v1/staff/messaging/messages/${id}`);
+  return res.data;
+}

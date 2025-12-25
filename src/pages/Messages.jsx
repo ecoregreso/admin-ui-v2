@@ -5,6 +5,7 @@ import {
   sendMessage,
   listMessages,
   markMessageRead,
+  deleteMessage as apiDeleteMessage,
 } from "../api/messagesApi";
 import { useStaffAuth } from "../context/StaffAuthContext.jsx";
 
@@ -310,6 +311,7 @@ export default function Messages() {
 
 function MessageRow({ msg, isMe, decrypt, fromLabel, toLabel }) {
   const [body, setBody] = useState("[Decrypting...]");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -338,6 +340,26 @@ function MessageRow({ msg, isMe, decrypt, fromLabel, toLabel }) {
       <div className="mt-1 text-[11px] text-slate-500 uppercase tracking-[0.08em]">
         Type: {msg.type || "text"}
       </div>
+      {isMe && (
+        <div className="mt-2 flex justify-end">
+          <button
+            className="text-red-300 hover:text-red-200 text-xs"
+            disabled={deleting}
+            onClick={async () => {
+              setDeleting(true);
+              try {
+                await apiDeleteMessage(msg.id);
+              } catch (err) {
+                console.error(err);
+              } finally {
+                setDeleting(false);
+              }
+            }}
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
