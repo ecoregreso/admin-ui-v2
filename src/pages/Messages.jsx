@@ -437,15 +437,9 @@ export default function Messages() {
                 ? `Conversation with ${target.trim()}`
                 : "Select a thread or enter a username to start chatting."}
             </div>
-            <div className="mt-1">
-              <button
-                className="btn-secondary"
-                onClick={() => loadThread(target.trim())}
-                disabled={loadingThread || !target.trim()}
-              >
-                {loadingThread ? "Loading..." : "Load thread"}
-              </button>
-            </div>
+            {loadingThread && (
+              <div className="text-xs text-slate-400">Loading thread...</div>
+            )}
             <div className="mt-2 flex flex-col gap-2">
               {messages.length === 0 && (
                 <div className="text-sm text-slate-400">No messages yet.</div>
