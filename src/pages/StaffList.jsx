@@ -68,11 +68,13 @@ export default function StaffList() {
   const [error, setError] = useState("");
 
   const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("cashier");
   const [newActive, setNewActive] = useState(true);
 
   const [resetPasswordValue, setResetPasswordValue] = useState("");
+  const [emailDraft, setEmailDraft] = useState("");
 
   async function loadStaff() {
     setLoading(true);
@@ -106,6 +108,7 @@ export default function StaffList() {
     if (selectedStaff) {
       setPermissionsDraft(displayPermissions(selectedStaff));
       setResetPasswordValue("");
+      setEmailDraft(selectedStaff.email || "");
     }
   }, [selectedStaff]);
 
@@ -115,12 +118,14 @@ export default function StaffList() {
     try {
       const data = await createStaff({
         username: newUsername,
+        email: newEmail,
         password: newPassword,
         role: newRole,
         isActive: newActive,
       });
       if (data.ok) {
         setNewUsername("");
+        setNewEmail("");
         setNewPassword("");
         setNewRole("cashier");
         setNewActive(true);
@@ -199,6 +204,22 @@ export default function StaffList() {
     }
   }
 
+  async function handleSaveEmail() {
+    if (!selectedStaff) return;
+    setError("");
+    try {
+      const data = await updateStaff(selectedStaff.id, { email: emailDraft });
+      if (data.ok) {
+        await loadStaff();
+      } else {
+        setError(data.error || "Failed to update email");
+      }
+    } catch (err) {
+      console.error("[StaffList] email error:", err);
+      setError("Failed to update email");
+    }
+  }
+
   function togglePermission(key) {
     setPermissionsDraft((prev) =>
       prev.includes(key) ? prev.filter((p) => p !== key) : [...prev, key]
@@ -238,6 +259,7 @@ export default function StaffList() {
                 <tr>
                   <th>ID</th>
                   <th>Username</th>
+                  <th>Email</th>
                   <th>Role</th>
                   <th>Active</th>
                 </tr>
@@ -252,13 +274,14 @@ export default function StaffList() {
                   >
                     <td>{s.id}</td>
                     <td>{s.username}</td>
+                    <td>{s.email || "-"}</td>
                     <td>{s.role}</td>
                     <td>{s.isActive ? "active" : "inactive"}</td>
                   </tr>
                 ))}
                 {!staff.length && !loading && (
                   <tr>
-                    <td colSpan={4} className="empty">
+                    <td colSpan={5} className="empty">
                       No staff users found.
                     </td>
                   </tr>
@@ -285,6 +308,16 @@ export default function StaffList() {
                   <div>
                     <div className="stat-label">Username</div>
                     <div className="stat-value">{selectedStaff.username}</div>
+                  </div>
+                  <div>
+                    <div className="stat-label">Email</div>
+                    <input
+                      type="email"
+                      value={emailDraft}
+                      onChange={(e) => setEmailDraft(e.target.value)}
+                      className="input"
+                      placeholder="email@domain.com"
+                    />
                   </div>
                   <div>
                     <div className="stat-label">Role</div>
@@ -336,6 +369,9 @@ export default function StaffList() {
                 ))}
 
                 <div className="inline">
+                  <button className="btn btn-secondary" onClick={handleSaveEmail}>
+                    Save Email
+                  </button>
                   <button className="btn btn-primary" onClick={handleSavePermissions}>
                     Save Permissions
                   </button>
@@ -379,6 +415,16 @@ export default function StaffList() {
                   onChange={(e) => setNewUsername(e.target.value)}
                   className="input"
                   required
+                />
+              </div>
+              <div className="field">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="input"
+                  placeholder="email@domain.com"
                 />
               </div>
               <div className="field">

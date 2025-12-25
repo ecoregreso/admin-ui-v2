@@ -7,9 +7,10 @@ export async function listStaff() {
 }
 
 // POST /api/v1/admin/staff
-export async function createStaff({ username, password, role, isActive, permissions }) {
+export async function createStaff({ username, email, password, role, isActive, permissions }) {
   const res = await api.post("/api/v1/admin/staff", {
     username,
+    email,
     password,
     role,
     isActive,
@@ -19,11 +20,12 @@ export async function createStaff({ username, password, role, isActive, permissi
 }
 
 // PATCH /api/v1/admin/staff/:id
-export async function updateStaff(id, { role, isActive, permissions }) {
+export async function updateStaff(id, { role, isActive, permissions, email }) {
   const res = await api.patch(`/api/v1/admin/staff/${id}`, {
     role,
     isActive,
     permissions,
+    email,
   });
   return res.data; // { ok, staff }
 }
