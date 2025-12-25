@@ -13,6 +13,11 @@ function formatNumber(n) {
   return Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
+function toNumber(value) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+}
+
 function fmtDate(value) {
   try {
     return new Date(value).toLocaleString();
@@ -59,8 +64,8 @@ export default function PlayersList() {
     try {
       const [playerRes, txRes, roundsRes, sessionsRes] = await Promise.all([
         getPlayer(id),
-        getPlayerTransactions(id, { limit: 50 }),
-        getPlayerRounds(id, { limit: 200 }),
+        getPlayerTransactions(id, { all: true }),
+        getPlayerRounds(id, { all: true }),
         getPlayerSessions(id, { limit: 200 }),
       ]);
 
@@ -130,6 +135,49 @@ export default function PlayersList() {
   const playerStatus =
     playerInfo?.status ?? (playerInfo?.isActive ? "active" : "inactive");
   const isActive = playerInfo?.isActive ?? playerStatus === "active";
+  const totalSpins = rounds.length;
+  const totalBet = rounds.reduce((sum, r) => sum + toNumber(r.betAmount), 0);
+  const totalWin = rounds.reduce((sum, r) => sum + toNumber(r.winAmount), 0);
+  const betTx = transactions.filter((t) => t.type === "game_bet");
+  const betCount = betTx.length;
+  const netResult = totalBet - totalWin;
+
+  const sessionIndex = sessions.reduce((acc, s) => {
+    acc[s.id] = s;
+    return acc;
+  }, {});
+
+  const perGameRows = Object.values(
+    rounds.reduce((acc, r) => {
+      const key = r.gameId || "unknown";
+      if (!acc[key]) {
+        acc[key] = { gameId: key, spins: 0, totalBet: 0, totalWin: 0 };
+      }
+      acc[key].spins += 1;
+      acc[key].totalBet += toNumber(r.betAmount);
+      acc[key].totalWin += toNumber(r.winAmount);
+      return acc;
+    }, {})
+  ).sort((a, b) => b.totalBet - a.totalBet);
+
+  const perSessionRows = Object.values(
+    rounds.reduce((acc, r) => {
+      const key = r.sessionId || "unknown";
+      if (!acc[key]) {
+        acc[key] = {
+          sessionId: key,
+          spins: 0,
+          totalBet: 0,
+          totalWin: 0,
+          lastSeenAt: sessionIndex[key]?.lastSeenAt || null,
+        };
+      }
+      acc[key].spins += 1;
+      acc[key].totalBet += toNumber(r.betAmount);
+      acc[key].totalWin += toNumber(r.winAmount);
+      return acc;
+    }, {})
+  ).sort((a, b) => b.totalBet - a.totalBet);
 
   return (
     <div className="page">
@@ -243,6 +291,39 @@ export default function PlayersList() {
                 </div>
               </div>
 
+              <div className="grid-3">
+                <div className="stat-card">
+                  <div className="stat-label">Spins</div>
+                  <div className="stat-value">{formatNumber(totalSpins)}</div>
+                  <div className="stat-meta">Rounds recorded</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-label">Bets</div>
+                  <div className="stat-value">{formatNumber(betCount)}</div>
+                  <div className="stat-meta">Bet transactions</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-label">Total Bet</div>
+                  <div className="stat-value">${formatNumber(totalBet)}</div>
+                  <div className="stat-meta">From rounds</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-label">Total Win</div>
+                  <div className="stat-value">${formatNumber(totalWin)}</div>
+                  <div className="stat-meta">From rounds</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-label">Net Result</div>
+                  <div className="stat-value">${formatNumber(netResult)}</div>
+                  <div className="stat-meta">Total bet minus win</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-label">Total Credits</div>
+                  <div className="stat-value">${formatNumber(playerInfo.balance)}</div>
+                  <div className="stat-meta">Wallet balance</div>
+                </div>
+              </div>
+
               <div className="panel" style={{ padding: 14 }}>
                 <div className="panel-title">Manual Balance Adjustment</div>
                 <div className="panel-subtitle">
@@ -323,36 +404,104 @@ export default function PlayersList() {
               )}
 
               {detailTab === "rounds" && (
-                <div className="table-wrap">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Game</th>
-                        <th>Bet</th>
-                        <th>Win</th>
-                        <th>Status</th>
-                        <th>Time</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rounds.map((r) => (
-                        <tr key={r.id}>
-                          <td>{r.gameId}</td>
-                          <td>${formatNumber(r.betAmount)}</td>
-                          <td>${formatNumber(r.winAmount)}</td>
-                          <td>{r.status}</td>
-                          <td>{fmtDate(r.createdAt)}</td>
-                        </tr>
-                      ))}
-                      {!rounds.length && (
+                <div className="stack">
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
                         <tr>
-                          <td colSpan={5} className="empty">
-                            No rounds recorded.
-                          </td>
+                          <th>Game</th>
+                          <th>Spins</th>
+                          <th>Total Bet</th>
+                          <th>Total Win</th>
+                          <th>Net</th>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {perGameRows.map((g) => (
+                          <tr key={g.gameId}>
+                            <td>{g.gameId}</td>
+                            <td>{formatNumber(g.spins)}</td>
+                            <td>${formatNumber(g.totalBet)}</td>
+                            <td>${formatNumber(g.totalWin)}</td>
+                            <td>${formatNumber(g.totalBet - g.totalWin)}</td>
+                          </tr>
+                        ))}
+                        {!perGameRows.length && (
+                          <tr>
+                            <td colSpan={5} className="empty">
+                              No game stats available.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Session</th>
+                          <th>Spins</th>
+                          <th>Total Bet</th>
+                          <th>Total Win</th>
+                          <th>Last Seen</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {perSessionRows.map((s) => (
+                          <tr key={s.sessionId}>
+                            <td>{s.sessionId === "unknown" ? "unknown" : String(s.sessionId).slice(0, 8)}</td>
+                            <td>{formatNumber(s.spins)}</td>
+                            <td>${formatNumber(s.totalBet)}</td>
+                            <td>${formatNumber(s.totalWin)}</td>
+                            <td>{s.lastSeenAt ? fmtDate(s.lastSeenAt) : "--"}</td>
+                          </tr>
+                        ))}
+                        {!perSessionRows.length && (
+                          <tr>
+                            <td colSpan={5} className="empty">
+                              No session stats available.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Game</th>
+                          <th>Bet</th>
+                          <th>Win</th>
+                          <th>Status</th>
+                          <th>Session</th>
+                          <th>Time</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rounds.map((r) => (
+                          <tr key={r.id}>
+                            <td>{r.gameId}</td>
+                            <td>${formatNumber(r.betAmount)}</td>
+                            <td>${formatNumber(r.winAmount)}</td>
+                            <td>{r.status}</td>
+                            <td>{r.sessionId ? String(r.sessionId).slice(0, 8) : "--"}</td>
+                            <td>{fmtDate(r.createdAt)}</td>
+                          </tr>
+                        ))}
+                        {!rounds.length && (
+                          <tr>
+                            <td colSpan={6} className="empty">
+                              No rounds recorded.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
 

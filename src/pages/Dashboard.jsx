@@ -70,9 +70,12 @@ export default function Dashboard() {
   };
 
   const sessions = {
-    activePlayers: data?.sessions?.activePlayers ?? players.active ?? 0,
+    activePlayers: data?.sessions?.activePlayers ?? 0,
     activeStaff: data?.sessions?.activeStaff ?? 0,
+    totalPlayers: data?.sessions?.totalPlayers ?? 0,
+    totalStaff: data?.sessions?.totalStaff ?? 0,
     staffSessions: data?.sessions?.staffSessions || [],
+    playerSessions: data?.sessions?.playerSessions || [],
   };
 
   const recent = {
@@ -111,7 +114,9 @@ export default function Dashboard() {
           <div className="stat-card">
             <div className="stat-label">New Players (24h)</div>
             <div className="stat-value">{fmtNumber(kpis.newPlayers24h, 0)}</div>
-            <div className="stat-meta">Sessions live: {fmtNumber(sessions.activePlayers, 0)}</div>
+            <div className="stat-meta">
+              Sessions live: {fmtNumber(sessions.activePlayers, 0)} / {fmtNumber(sessions.totalPlayers, 0)}
+            </div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Wallet Float</div>
@@ -131,7 +136,9 @@ export default function Dashboard() {
           <div className="stat-card">
             <div className="stat-label">Debits (24h)</div>
             <div className="stat-value">{fmtNumber(kpis.debits24h)}</div>
-            <div className="stat-meta">Staff sessions: {fmtNumber(sessions.activeStaff, 0)}</div>
+            <div className="stat-meta">
+              Staff sessions: {fmtNumber(sessions.activeStaff, 0)} / {fmtNumber(sessions.totalStaff, 0)}
+            </div>
           </div>
         </div>
       </div>
@@ -174,9 +181,48 @@ export default function Dashboard() {
           </div>
           <div className="stack">
             <div className="inline">
-              <span className="tag tag-blue">Players {fmtNumber(sessions.activePlayers, 0)}</span>
-              <span className="tag tag-red">Staff {fmtNumber(sessions.activeStaff, 0)}</span>
+              <span className="tag tag-blue">
+                Players Active {fmtNumber(sessions.activePlayers, 0)}
+              </span>
+              <span className="tag tag-blue">
+                Players Total {fmtNumber(sessions.totalPlayers, 0)}
+              </span>
+              <span className="tag tag-red">
+                Staff Active {fmtNumber(sessions.activeStaff, 0)}
+              </span>
+              <span className="tag tag-red">
+                Staff Total {fmtNumber(sessions.totalStaff, 0)}
+              </span>
             </div>
+            <div className="panel-subtitle">Active player sessions</div>
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Player ID</th>
+                    <th>Session</th>
+                    <th>Last Seen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(sessions.playerSessions || []).map((s) => (
+                    <tr key={s.id}>
+                      <td>{String(s.userId).slice(0, 10)}</td>
+                      <td>{String(s.id).slice(0, 10)}</td>
+                      <td>{fmtDate(s.lastSeenAt || s.createdAt)}</td>
+                    </tr>
+                  ))}
+                  {!sessions.playerSessions?.length && (
+                    <tr>
+                      <td colSpan={3} className="empty">
+                        No player sessions yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="panel-subtitle">Active staff sessions</div>
             <div className="table-wrap">
               <table className="table">
                 <thead>

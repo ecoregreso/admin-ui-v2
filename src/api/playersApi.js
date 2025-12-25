@@ -21,16 +21,20 @@ export async function adjustPlayerBalance(id, { amount, reason, currency } = {})
   return res.data;
 }
 
-export async function getPlayerTransactions(id, { limit = 50 } = {}) {
+export async function getPlayerTransactions(id, { limit = 50, all = false } = {}) {
+  const params = { limit };
+  if (all) params.all = 1;
   const res = await api.get(`/api/v1/admin/players/${id}/transactions`, {
-    params: { limit },
+    params,
   });
   return res.data;
 }
 
-export async function getPlayerRounds(id, { limit = 50 } = {}) {
+export async function getPlayerRounds(id, { limit = 50, all = false } = {}) {
+  const params = { limit };
+  if (all) params.all = 1;
   const res = await api.get(`/api/v1/admin/players/${id}/rounds`, {
-    params: { limit },
+    params,
   });
   return res.data;
 }
