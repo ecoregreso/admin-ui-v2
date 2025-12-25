@@ -496,6 +496,7 @@ export default function Messages() {
 function MessageRow({ msg, isMe, decrypt, fromLabel, toLabel, onDeleted }) {
   const [body, setBody] = useState("[Decrypting...]");
   const [deleting, setDeleting] = useState(false);
+  const [decrypting, setDecrypting] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -545,6 +546,25 @@ function MessageRow({ msg, isMe, decrypt, fromLabel, toLabel, onDeleted }) {
           </button>
         </div>
       )}
+      <div className="mt-2 flex justify-start">
+        <button
+          className="btn-secondary text-xs px-2 py-1"
+          disabled={decrypting}
+          onClick={async () => {
+            setDecrypting(true);
+            try {
+              const b = await decrypt();
+              setBody(b);
+            } catch (err) {
+              console.error(err);
+            } finally {
+              setDecrypting(false);
+            }
+          }}
+        >
+          {decrypting ? "Decrypting..." : "Decrypt message"}
+        </button>
+      </div>
     </div>
   );
 }
