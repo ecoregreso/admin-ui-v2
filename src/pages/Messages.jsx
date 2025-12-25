@@ -114,7 +114,9 @@ export default function Messages() {
   const [type, setType] = useState("text");
   const [content, setContent] = useState("");
   const [messages, setMessages] = useState([]);
+  const [threadList, setThreadList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingThread, setLoadingThread] = useState(false);
   const [error, setError] = useState("");
 
   const hasKeys = useMemo(() => !!privateKey && !!publicKey, [privateKey, publicKey]);
@@ -150,30 +152,78 @@ export default function Messages() {
     }
   }
 
-  async function loadMessages(username) {
+  function buildThreads(msgs = []) {
+    const map = new Map();
+    for (const m of msgs) {
+      const otherId = m.fromId === staff?.id ? m.toId : m.fromId;
+      const otherName = m.fromId === staff?.id ? m.toUsername || m.toId : m.fromUsername || m.fromId;
+      if (!otherId) continue;
+      const key = m.threadId || `${staff?.id}-${otherId}`;
+      const entry = map.get(key) || {
+        threadId: key,
+        username: otherName,
+        otherId,
+        unread: 0,
+        lastAt: m.createdAt,
+      };
+      const existingTs = new Date(entry.lastAt).getTime();
+      const newTs = new Date(m.createdAt).getTime();
+      if (newTs > existingTs) entry.lastAt = m.createdAt;
+      if (m.toId === staff?.id && !m.readAt) entry.unread += 1;
+      map.set(key, entry);
+    }
+    return Array.from(map.values()).sort((a, b) => new Date(b.lastAt) - new Date(a.lastAt));
+  }
+
+  async function loadInbox() {
     setLoading(true);
     setError("");
     try {
-      const res = await listMessages(username ? { withUser: username } : {});
+      const res = await listMessages({});
+      const msgs = res.messages || [];
+      setThreadList(buildThreads(msgs));
+      if (!target.trim()) {
+        setMessages(msgs);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load inbox");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadThread(username) {
+    if (!username) {
+      setMessages([]);
+      return;
+    }
+    setLoadingThread(true);
+    setError("");
+    try {
+      const res = await listMessages({ withUser: username });
       setMessages(res.messages || []);
-      // Mark unread addressed to me
       for (const m of res.messages || []) {
         if (m.toId === staff?.id && !m.readAt) {
           markMessageRead(m.id).catch(() => {});
         }
       }
+      setTarget(username);
+      setThreadList((prev) =>
+        prev.map((t) => (t.username === username ? { ...t, unread: 0 } : t))
+      );
     } catch (err) {
       console.error(err);
-      setError("Failed to load messages");
+      setError("Failed to load thread");
     } finally {
-      setLoading(false);
+      setLoadingThread(false);
     }
   }
 
   // Auto-populate inbox on sign-in / page open
   useEffect(() => {
     if (staff?.id) {
-      loadMessages(null);
+      loadInbox();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staff?.id]);
@@ -205,7 +255,8 @@ export default function Messages() {
       });
       setContent("");
       setStatus("Sent");
-      await loadMessages(target.trim());
+      await loadThread(target.trim());
+      await loadInbox();
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to send message");
@@ -213,6 +264,7 @@ export default function Messages() {
   }
 
   async function renderBody(msg) {
+    if (!privateKey) return "[Missing private key]";
     try {
       const envelope = JSON.parse(msg.ciphertext);
       const plaintext = await decryptEnvelope({
@@ -284,40 +336,89 @@ export default function Messages() {
       </div>
 
       <div className="card">
-        <div className="card-title">Thread</div>
+        <div className="card-title">Threads</div>
         <div className="card-subtext">
-          Inbox auto-loads on open. Enter a username and click “Send” or “Load” to view a specific
-          thread.
+          Inbox auto-loads on open. Select a thread to view messages or start a new one.
         </div>
-        <div className="mt-3">
-          <button
-            className="btn-secondary"
-            onClick={() => loadMessages(target.trim() || null)}
-            disabled={loading}
-          >
-            {loading ? "Loading..." : "Load thread"}
+        <div className="mt-3 flex items-center gap-3">
+          <button className="btn-secondary" onClick={loadInbox} disabled={loading}>
+            {loading ? "Refreshing..." : "Refresh inbox"}
           </button>
         </div>
 
-        <div className="mt-3 flex flex-col gap-2">
-          {messages.length === 0 && <div className="text-sm text-slate-400">No messages yet.</div>}
-          {messages.map((m) => (
-            <MessageRow
-              key={m.id}
-              msg={m}
-              isMe={m.fromId === staff?.id}
-              fromLabel={m.fromId === staff?.id ? "You" : m.fromUsername || m.fromId}
-              toLabel={m.toId === staff?.id ? "You" : m.toUsername || m.toId}
-              decrypt={() => renderBody(m)}
-            />
-          ))}
+        <div className="mt-3 grid md:grid-cols-[240px,1fr] gap-4">
+          <div className="flex flex-col gap-2 max-h-[420px] overflow-y-auto pr-1">
+            {threadList.length === 0 && (
+              <div className="text-sm text-slate-400">No conversations yet.</div>
+            )}
+            {threadList.map((t) => (
+              <button
+                key={t.threadId}
+                className={`text-left px-3 py-2 rounded border ${
+                  target.trim() === t.username
+                    ? "border-sky-400 bg-sky-400/10"
+                    : "border-slate-700 bg-slate-900"
+                }`}
+                onClick={() => {
+                  setTarget(t.username);
+                  loadThread(t.username);
+                }}
+              >
+                <div className="flex justify-between items-center text-sm text-slate-100">
+                  <span>{t.username}</span>
+                  {t.unread > 0 && (
+                    <span className="text-xs text-amber-300 font-semibold">{t.unread} new</span>
+                  )}
+                </div>
+                <div className="text-xs text-slate-500">
+                  Last: {new Date(t.lastAt).toLocaleString()}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <div className="card-subtext">
+              {target.trim()
+                ? `Conversation with ${target.trim()}`
+                : "Select a thread or enter a username to start chatting."}
+            </div>
+            <div className="mt-1">
+              <button
+                className="btn-secondary"
+                onClick={() => loadThread(target.trim())}
+                disabled={loadingThread || !target.trim()}
+              >
+                {loadingThread ? "Loading..." : "Load thread"}
+              </button>
+            </div>
+            <div className="mt-2 flex flex-col gap-2">
+              {messages.length === 0 && (
+                <div className="text-sm text-slate-400">No messages yet.</div>
+              )}
+              {messages.map((m) => (
+                <MessageRow
+                  key={m.id}
+                  msg={m}
+                  isMe={m.fromId === staff?.id}
+                  fromLabel={m.fromId === staff?.id ? "You" : m.fromUsername || m.fromId}
+                  toLabel={m.toId === staff?.id ? "You" : m.toUsername || m.toId}
+                  decrypt={() => renderBody(m)}
+                  onDeleted={() => {
+                    loadThread(target.trim());
+                    loadInbox();
+                  }}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function MessageRow({ msg, isMe, decrypt, fromLabel, toLabel }) {
+function MessageRow({ msg, isMe, decrypt, fromLabel, toLabel, onDeleted }) {
   const [body, setBody] = useState("[Decrypting...]");
   const [deleting, setDeleting] = useState(false);
 
@@ -357,6 +458,7 @@ function MessageRow({ msg, isMe, decrypt, fromLabel, toLabel }) {
               setDeleting(true);
               try {
                 await apiDeleteMessage(msg.id);
+                onDeleted?.();
               } catch (err) {
                 console.error(err);
               } finally {
