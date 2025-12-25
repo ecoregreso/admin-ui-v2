@@ -38,6 +38,22 @@ export default function PurchaseOrders() {
     acknowledged: "Step 5: Complete",
   };
 
+  const agentStageHelp = {
+    pending: "Waiting for owner to share a wallet. No action needed yet.",
+    approved: "Copy the wallet, send BTC, then submit your confirmation / tx hash.",
+    awaiting_credit: "Payment submitted. Wait for owner to credit your FUN.",
+    completed: "Owner credited FUN. Confirm receipt to close the order.",
+    acknowledged: "Order is complete.",
+  };
+
+  const ownerStageHelp = {
+    pending: "Share a BTC wallet and approve to move this order forward.",
+    approved: "Waiting for agent payment confirmation.",
+    awaiting_credit: "Agent posted confirmation. Credit FUN, then mark credited.",
+    completed: "Waiting for agent to confirm receipt.",
+    acknowledged: "Order is complete.",
+  };
+
   const isFinance = useMemo(
     () => (staff?.permissions || []).includes("finance:write"),
     [staff]
@@ -383,6 +399,12 @@ export default function PurchaseOrders() {
                 <td>{new Date(o.updatedAt || o.createdAt).toLocaleString()}</td>
                 <td>
                   <div className="thread">
+                    <div className="order-stage-help">
+                      <div className="small muted">
+                        {(isFinance ? ownerStageHelp[o.status] : agentStageHelp[o.status]) ||
+                          "Follow the next action in this thread."}
+                      </div>
+                    </div>
                     <div className="order-actions">
                       {isFinance && o.status === "pending" && (
                         <div className="action-block">
