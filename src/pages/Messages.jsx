@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   savePublicKey,
   fetchPublicKey,
+  fetchSelfKey,
   sendMessage,
   listMessages,
   markMessageRead,
@@ -140,11 +141,13 @@ export default function Messages() {
     setError("");
     try {
       const { publicKeyJwk, privateKeyJwk } = await generateKeyPair();
-      localStorage.setItem(LOCAL_PUBLIC_KEY, JSON.stringify(publicKeyJwk));
-      localStorage.setItem(LOCAL_PRIVATE_KEY, JSON.stringify(privateKeyJwk));
+      const pubStr = JSON.stringify(publicKeyJwk);
+      const privStr = JSON.stringify(privateKeyJwk);
+      localStorage.setItem(LOCAL_PUBLIC_KEY, pubStr);
+      localStorage.setItem(LOCAL_PRIVATE_KEY, privStr);
       setPublicKey(publicKeyJwk);
       setPrivateKey(privateKeyJwk);
-      await savePublicKey(JSON.stringify(publicKeyJwk));
+      await savePublicKey(pubStr, privStr);
       setStatus("Keys generated and uploaded.");
     } catch (err) {
       console.error(err);
@@ -228,6 +231,30 @@ export default function Messages() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staff?.id]);
+
+  // If private key missing, try to pull stored key from server
+  useEffect(() => {
+    async function fetchOwnKey() {
+      try {
+        const res = await fetchSelfKey();
+        if (res?.key?.encryptedPrivateKey) {
+          const priv = JSON.parse(res.key.encryptedPrivateKey);
+          localStorage.setItem(LOCAL_PRIVATE_KEY, JSON.stringify(priv));
+          setPrivateKey(priv);
+        }
+        if (res?.key?.publicKey) {
+          const pub = JSON.parse(res.key.publicKey);
+          localStorage.setItem(LOCAL_PUBLIC_KEY, JSON.stringify(pub));
+          setPublicKey(pub);
+        }
+      } catch (err) {
+        console.warn("[Keys] no stored key on server", err?.message || err);
+      }
+    }
+    if (staff?.id && !privateKey) {
+      fetchOwnKey();
+    }
+  }, [staff?.id, privateKey]);
 
   async function handleSend(e) {
     e.preventDefault();

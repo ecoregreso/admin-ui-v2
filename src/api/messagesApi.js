@@ -1,13 +1,18 @@
 // src/api/messagesApi.js
 import api from "./client";
 
-export async function savePublicKey(publicKey) {
-  const res = await api.post("/api/v1/staff/messaging/keys", { publicKey });
+export async function savePublicKey(publicKey, encryptedPrivateKey) {
+  const res = await api.post("/api/v1/staff/messaging/keys", { publicKey, encryptedPrivateKey });
   return res.data;
 }
 
 export async function fetchPublicKey(username) {
   const res = await api.get(`/api/v1/staff/messaging/keys/${encodeURIComponent(username)}`);
+  return res.data;
+}
+
+export async function fetchSelfKey() {
+  const res = await api.get("/api/v1/staff/messaging/keys/self");
   return res.data;
 }
 
