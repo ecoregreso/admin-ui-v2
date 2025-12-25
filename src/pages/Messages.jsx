@@ -113,6 +113,7 @@ export default function Messages() {
   const [target, setTarget] = useState("");
   const [type, setType] = useState("text");
   const [content, setContent] = useState("");
+  const [privateKeyInput, setPrivateKeyInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [threadList, setThreadList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -292,6 +293,59 @@ export default function Messages() {
             {hasKeys ? "Regenerate keys" : "Generate & upload keys"}
           </button>
           {hasKeys && <div className="text-xs text-slate-400">Keys stored locally.</div>}
+          {hasKeys && (
+            <button
+              className="btn-secondary"
+              type="button"
+              onClick={() => {
+                navigator.clipboard
+                  ?.writeText(JSON.stringify(privateKey || {}))
+                  .then(() => setStatus("Private key copied. Store it safely."))
+                  .catch(() => setStatus("Copy failed. Copy manually from the import box."));
+              }}
+            >
+              Copy my private key
+            </button>
+          )}
+        </div>
+        <div className="mt-3 grid gap-2">
+          <label className="text-xs text-slate-300">
+            Import private key (paste saved JSON and click “Save”)
+          </label>
+          <textarea
+            rows={3}
+            value={privateKeyInput}
+            onChange={(e) => setPrivateKeyInput(e.target.value)}
+            className="px-2 py-2 rounded bg-slate-900 border border-slate-700 text-xs text-slate-100"
+            placeholder='{"kty":"RSA",...}'
+          />
+          <div className="flex gap-2">
+            <button
+              className="btn-secondary"
+              type="button"
+              onClick={() => {
+                try {
+                  const parsed = JSON.parse(privateKeyInput);
+                  localStorage.setItem(LOCAL_PRIVATE_KEY, JSON.stringify(parsed));
+                  setPrivateKey(parsed);
+                  setStatus("Private key saved locally.");
+                  setError("");
+                } catch (err) {
+                  console.error(err);
+                  setError("Invalid private key JSON");
+                }
+              }}
+            >
+              Save private key
+            </button>
+            <button
+              className="btn-secondary"
+              type="button"
+              onClick={() => setPrivateKeyInput("")}
+            >
+              Clear
+            </button>
+          </div>
         </div>
       </div>
 
