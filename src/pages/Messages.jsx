@@ -10,6 +10,13 @@ import {
   deleteThread,
   deleteInbox,
 } from "../api/messagesApi";
+import {
+  getVapidPublicKey,
+  listPushDevices,
+  registerPushDevice,
+  deletePushDevice,
+  sendPushTest,
+} from "../api/pushApi";
 import { useStaffAuth } from "../context/StaffAuthContext.jsx";
 
 const LOCAL_PRIVATE_KEY = "ptu_staff_private_key";
@@ -24,6 +31,17 @@ function base64ToBuffer(b64) {
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes.buffer;
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  const output = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) {
+    output[i] = raw.charCodeAt(i);
+  }
+  return output;
 }
 
 async function generateKeyPair() {
@@ -119,11 +137,22 @@ export default function Messages() {
   const [privateKeyInput, setPrivateKeyInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [threadList, setThreadList] = useState([]);
+  const [pushDevices, setPushDevices] = useState([]);
+  const [pushLabel, setPushLabel] = useState("");
+  const [mobileToken, setMobileToken] = useState("");
+  const [mobileType, setMobileType] = useState("fcm");
+  const [pushStatus, setPushStatus] = useState("");
+  const [pushError, setPushError] = useState("");
+  const [pushLoading, setPushLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingThread, setLoadingThread] = useState(false);
   const [error, setError] = useState("");
 
   const hasKeys = useMemo(() => !!privateKey && !!publicKey, [privateKey, publicKey]);
+  const canPush = useMemo(
+    () => ["owner", "agent", "operator"].includes(staff?.role),
+    [staff?.role]
+  );
 
   useEffect(() => {
     try {
@@ -258,6 +287,86 @@ export default function Messages() {
     }
   }, [staff?.id, privateKey]);
 
+  async function refreshPushDevices() {
+    if (!canPush) return;
+    setPushLoading(true);
+    setPushError("");
+    try {
+      const res = await listPushDevices();
+      setPushDevices(res.devices || []);
+    } catch (err) {
+      console.error(err);
+      setPushError("Failed to load push devices");
+    } finally {
+      setPushLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (canPush) {
+      refreshPushDevices();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canPush]);
+
+  async function handleEnableWebPush() {
+    setPushStatus("");
+    setPushError("");
+    try {
+      if (!("serviceWorker" in navigator)) {
+        return setPushError("Service worker not supported in this browser");
+      }
+      if (!("PushManager" in window)) {
+        return setPushError("Push notifications not supported in this browser");
+      }
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        return setPushError("Notification permission denied");
+      }
+      const vapidRes = await getVapidPublicKey();
+      const appKey = urlBase64ToUint8Array(vapidRes.publicKey);
+      const registration = await navigator.serviceWorker.register("/push-sw.js");
+      const existing = await registration.pushManager.getSubscription();
+      const sub =
+        existing ||
+        (await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: appKey,
+        }));
+      await registerPushDevice({
+        deviceType: "web",
+        subscription: sub.toJSON(),
+        label: pushLabel.trim() || "Browser",
+        platform: navigator.userAgent,
+      });
+      setPushStatus("Browser push enabled.");
+      await refreshPushDevices();
+    } catch (err) {
+      console.error(err);
+      setPushError("Failed to enable browser push");
+    }
+  }
+
+  async function handleRegisterMobileToken() {
+    setPushStatus("");
+    setPushError("");
+    if (!mobileToken.trim()) return setPushError("Enter a device token");
+    try {
+      await registerPushDevice({
+        deviceType: mobileType,
+        token: mobileToken.trim(),
+        label: pushLabel.trim() || "Mobile device",
+        platform: mobileType.toUpperCase(),
+      });
+      setPushStatus("Mobile device registered.");
+      setMobileToken("");
+      await refreshPushDevices();
+    } catch (err) {
+      console.error(err);
+      setPushError("Failed to register mobile device");
+    }
+  }
+
   async function handleSend(e) {
     e.preventDefault();
     setError("");
@@ -294,7 +403,7 @@ export default function Messages() {
   }
 
   async function renderBody(msg) {
-    if (!privateKey) return "[Missing private key]";
+    if (!privateKey) return msg.ciphertext || "[Missing private key]";
     try {
       const envelope = JSON.parse(msg.ciphertext);
       const plaintext = await decryptEnvelope({
@@ -305,7 +414,7 @@ export default function Messages() {
       const parsed = JSON.parse(plaintext);
       return parsed.body || plaintext;
     } catch {
-      return "[Cannot decrypt]";
+      return msg.ciphertext || "[Cannot decrypt]";
     }
   }
 
@@ -377,6 +486,116 @@ export default function Messages() {
           </div>
         </div>
       </div>
+
+      {canPush && (
+        <div className="card">
+          <div className="card-title">Push Notifications</div>
+          <div className="card-subtext">
+            Send generic alerts only. No sensitive data is included in push payloads.
+          </div>
+          {pushError && <div className="mt-2 text-sm text-red-400">{pushError}</div>}
+          {pushStatus && <div className="mt-2 text-sm text-emerald-300">{pushStatus}</div>}
+
+          <div className="mt-3 grid gap-3">
+            <label className="flex flex-col gap-1 text-xs text-slate-300">
+              Device label (optional)
+              <input
+                value={pushLabel}
+                onChange={(e) => setPushLabel(e.target.value)}
+                className="px-2 py-1 rounded bg-slate-900 border border-slate-700 text-sm text-slate-100"
+              />
+            </label>
+
+            <div className="flex flex-wrap gap-2">
+              <button className="btn-primary" type="button" onClick={handleEnableWebPush}>
+                Enable browser push
+              </button>
+              <button
+                className="btn-secondary"
+                type="button"
+                onClick={async () => {
+                  try {
+                    await sendPushTest();
+                    setPushStatus("Test notification sent.");
+                  } catch (err) {
+                    console.error(err);
+                    setPushError("Failed to send test notification");
+                  }
+                }}
+              >
+                Send test
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-[140px,1fr,120px] gap-2 items-end">
+              <label className="flex flex-col gap-1 text-xs text-slate-300">
+                Mobile type
+                <select
+                  value={mobileType}
+                  onChange={(e) => setMobileType(e.target.value)}
+                  className="px-2 py-1 rounded bg-slate-900 border border-slate-700 text-sm text-slate-100"
+                >
+                  <option value="fcm">FCM</option>
+                  <option value="apns">APNs</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-slate-300">
+                Mobile device token
+                <input
+                  value={mobileToken}
+                  onChange={(e) => setMobileToken(e.target.value)}
+                  className="px-2 py-1 rounded bg-slate-900 border border-slate-700 text-sm text-slate-100"
+                  placeholder="Paste token from your app"
+                />
+              </label>
+              <button className="btn-primary" type="button" onClick={handleRegisterMobileToken}>
+                Register
+              </button>
+            </div>
+
+            <div className="mt-2">
+              <div className="text-xs text-slate-400 mb-2">Registered devices</div>
+              {pushLoading && <div className="text-xs text-slate-400">Loading...</div>}
+              {!pushLoading && pushDevices.length === 0 && (
+                <div className="text-xs text-slate-500">No devices registered.</div>
+              )}
+              <div className="flex flex-col gap-2">
+                {pushDevices.map((d) => (
+                  <div
+                    key={d.id}
+                    className="flex items-center justify-between border border-slate-800 rounded px-3 py-2"
+                  >
+                    <div className="text-xs text-slate-300">
+                      <div className="text-sm text-slate-100">
+                        {d.label || d.deviceType.toUpperCase()}
+                      </div>
+                      <div>
+                        {d.deviceType.toUpperCase()} ·{" "}
+                        {new Date(d.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                    <button
+                      className="text-red-300 hover:text-red-200 text-xs"
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await deletePushDevice(d.id);
+                          await refreshPushDevices();
+                        } catch (err) {
+                          console.error(err);
+                          setPushError("Failed to remove device");
+                        }
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <div className="card-title">Compose</div>
