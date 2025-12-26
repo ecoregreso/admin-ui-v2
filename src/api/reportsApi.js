@@ -31,3 +31,10 @@ export async function fetchRiskReport({ from, to }) {
   });
   return res.data;
 }
+
+export async function fetchPerformanceReport({ from, to }) {
+  const res = await api.get("/api/v1/admin/reports/performance", {
+    params: { from, to, start: from, end: to },
+  });
+  return res.data;
+}

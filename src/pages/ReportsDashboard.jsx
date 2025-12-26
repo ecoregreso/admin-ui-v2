@@ -22,6 +22,7 @@ import {
 import {
   fetchBehaviorReport,
   fetchDailyReport,
+  fetchPerformanceReport,
   fetchRiskReport,
   fetchRangeReport,
 } from "../api/reportsApi";
@@ -60,6 +61,18 @@ function formatNumber(n) {
   });
 }
 
+function getHeatColor(value, max) {
+  if (!value || !max) return "rgba(255, 255, 255, 0.04)";
+  const ratio = Math.max(0, Math.min(1, value / max));
+  const start = { r: 39, g: 217, b: 255 };
+  const end = { r: 255, g: 48, b: 79 };
+  const r = Math.round(start.r + (end.r - start.r) * ratio);
+  const g = Math.round(start.g + (end.g - start.g) * ratio);
+  const b = Math.round(start.b + (end.b - start.b) * ratio);
+  const alpha = 0.18 + ratio * 0.72;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 
 export default function ReportsDashboard() {
   const [from, setFrom] = useState("");
@@ -68,11 +81,13 @@ export default function ReportsDashboard() {
   const [behavior, setBehavior] = useState(null);
   const [daily, setDaily] = useState(null);
   const [risk, setRisk] = useState(null);
+  const [performance, setPerformance] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [behaviorError, setBehaviorError] = useState("");
   const [dailyError, setDailyError] = useState("");
   const [riskError, setRiskError] = useState("");
+  const [performanceError, setPerformanceError] = useState("");
 
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -89,19 +104,23 @@ export default function ReportsDashboard() {
     setBehaviorError("");
     setDailyError("");
     setRiskError("");
+    setPerformanceError("");
     setLoading(true);
     setReport(null);
     setBehavior(null);
     setDaily(null);
     setRisk(null);
+    setPerformance(null);
 
     try {
-      const [rangeResult, behaviorResult, dailyResult, riskResult] = await Promise.allSettled([
-        fetchRangeReport({ from, to }),
-        fetchBehaviorReport({ from, to }),
-        fetchDailyReport({ from, to }),
-        fetchRiskReport({ from, to }),
-      ]);
+      const [rangeResult, behaviorResult, dailyResult, riskResult, performanceResult] =
+        await Promise.allSettled([
+          fetchRangeReport({ from, to }),
+          fetchBehaviorReport({ from, to }),
+          fetchDailyReport({ from, to }),
+          fetchRiskReport({ from, to }),
+          fetchPerformanceReport({ from, to }),
+        ]);
 
       if (rangeResult.status === "fulfilled") {
         const data = rangeResult.value;
@@ -149,6 +168,20 @@ export default function ReportsDashboard() {
       } else {
         console.error("[ReportsDashboard] risk error:", riskResult.reason);
         setRiskError(riskResult.reason?.message || "Failed to load risk signals");
+      }
+
+      if (performanceResult.status === "fulfilled") {
+        const data = performanceResult.value;
+        if (!data.ok) {
+          setPerformanceError(data.error || "Failed to load game performance");
+        } else {
+          setPerformance(data);
+        }
+      } else {
+        console.error("[ReportsDashboard] performance error:", performanceResult.reason);
+        setPerformanceError(
+          performanceResult.reason?.message || "Failed to load game performance"
+        );
       }
     } catch (err) {
       console.error("[ReportsDashboard] error:", err);
@@ -307,6 +340,103 @@ export default function ReportsDashboard() {
     [risk]
   );
 
+  const performanceRtpGames = useMemo(
+    () => performance?.rtpByGame?.games || [],
+    [performance]
+  );
+
+  const rtpChartData = useMemo(() => {
+    if (!performanceRtpGames.length) return [];
+    return [...performanceRtpGames]
+      .map((game) => {
+        const actualRtp = Number(game.actualRtp || 0);
+        const expectedRtp = Number(game.expectedRtp || 0);
+        return {
+          name: String(game.gameId || game.game || "Unknown"),
+          rounds: Number(game.rounds || 0),
+          totalBet: Number(game.totalBet || 0),
+          totalWin: Number(game.totalWin || 0),
+          actual: actualRtp * 100,
+          expected: expectedRtp * 100,
+          delta: (actualRtp - expectedRtp) * 100,
+        };
+      })
+      .sort((a, b) => b.rounds - a.rounds)
+      .slice(0, 8);
+  }, [performanceRtpGames]);
+
+  const spinVolumeSeries = useMemo(
+    () => performance?.spinVolume?.days || [],
+    [performance]
+  );
+
+  const volatilityDays = useMemo(
+    () => performance?.volatility?.days || [],
+    [performance]
+  );
+
+  const volatilityCells = useMemo(
+    () => performance?.volatility?.cells || [],
+    [performance]
+  );
+
+  const volatilityMax = useMemo(
+    () => performance?.volatility?.max || 0,
+    [performance]
+  );
+
+  const heatmapGames = useMemo(() => {
+    if (performanceRtpGames.length) {
+      return performanceRtpGames
+        .map((game) => String(game.gameId || game.game || "Unknown"))
+        .filter(Boolean)
+        .slice(0, 8);
+    }
+    const fallback = performance?.volatility?.games || [];
+    return fallback.map((game) => String(game)).slice(0, 8);
+  }, [performanceRtpGames, performance]);
+
+  const volatilityMap = useMemo(() => {
+    const map = new Map();
+    for (const cell of volatilityCells) {
+      const day = cell.day;
+      const gameId = String(cell.gameId || "");
+      if (!day || !gameId) continue;
+      map.set(`${gameId}__${day}`, cell);
+    }
+    return map;
+  }, [volatilityCells]);
+
+  const heatmapLabelStep = useMemo(() => {
+    if (!volatilityDays.length) return 1;
+    return Math.ceil(volatilityDays.length / 10);
+  }, [volatilityDays]);
+
+  const topVolatilityCells = useMemo(
+    () =>
+      [...volatilityCells]
+        .filter((cell) => Number(cell.volatility || 0) > 0)
+        .sort((a, b) => Number(b.volatility || 0) - Number(a.volatility || 0))
+        .slice(0, 6),
+    [volatilityCells]
+  );
+
+  const peakSpinVolume = useMemo(() => {
+    if (!spinVolumeSeries.length) return null;
+    return spinVolumeSeries.reduce((max, entry) =>
+      entry.spins > max.spins ? entry : max
+    );
+  }, [spinVolumeSeries]);
+
+  const topSpinDays = useMemo(
+    () =>
+      [...spinVolumeSeries]
+        .filter((entry) => entry.spins)
+        .sort((a, b) => b.spins - a.spins)
+        .slice(0, 5),
+    [spinVolumeSeries]
+  );
+
   const peakDaily = useMemo(() => {
     if (!accountDaily.length) return null;
     return accountDaily.reduce((max, entry) => (entry.count > max.count ? entry : max));
@@ -360,6 +490,21 @@ export default function ReportsDashboard() {
   const hasAccountVelocity = useMemo(
     () => accountDaily.some((point) => point.count) || accountHourly.some((point) => point.count),
     [accountDaily, accountHourly]
+  );
+
+  const hasRtp = useMemo(
+    () => rtpChartData.some((point) => point.actual || point.expected),
+    [rtpChartData]
+  );
+
+  const hasVolatility = useMemo(
+    () => volatilityCells.some((cell) => cell.volatility),
+    [volatilityCells]
+  );
+
+  const hasSpinVolume = useMemo(
+    () => spinVolumeSeries.some((point) => point.spins),
+    [spinVolumeSeries]
   );
 
   const renderWinRateTooltip = ({ active, payload }) => {
@@ -1137,6 +1282,256 @@ export default function ReportsDashboard() {
                 <div className="empty">No account velocity data in this range.</div>
               )}
             </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <h3 className="panel-title">Game Performance</h3>
+                <p className="panel-subtitle">
+                  Math meets psychology: RTP variance, volatility, and spin volume.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid-2">
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <h3 className="panel-title">RTP by Game (Actual vs Expected)</h3>
+                  <p className="panel-subtitle">Variance is variance until it sticks.</p>
+                </div>
+              </div>
+              {performanceError && <div className="alert">{performanceError}</div>}
+              {hasRtp ? (
+                <div className="stack">
+                  <div style={{ width: "100%", height: 240 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={rtpChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                        <XAxis dataKey="name" stroke="rgba(202,210,224,0.6)" />
+                        <YAxis
+                          stroke="rgba(202,210,224,0.6)"
+                          tickFormatter={(value) => formatPercent(value)}
+                          domain={[0, "auto"]}
+                        />
+                        <Tooltip
+                          contentStyle={TOOLTIP_STYLE}
+                          formatter={(value) => formatPercent(value)}
+                        />
+                        <Legend />
+                        <Bar dataKey="actual" name="Actual RTP" fill="#27d9ff" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="expected" name="Expected RTP" fill="#f6c453" radius={[6, 6, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Game</th>
+                          <th>Rounds</th>
+                          <th>Actual RTP</th>
+                          <th>Expected RTP</th>
+                          <th>Δ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rtpChartData.map((entry) => (
+                          <tr key={entry.name}>
+                            <td>{entry.name}</td>
+                            <td>{formatNumber(entry.rounds)}</td>
+                            <td>{formatPercent(entry.actual)}</td>
+                            <td>{formatPercent(entry.expected)}</td>
+                            <td>
+                              {`${entry.delta >= 0 ? "+" : ""}${formatPercent(entry.delta)}`}
+                            </td>
+                          </tr>
+                        ))}
+                        {!rtpChartData.length && (
+                          <tr>
+                            <td colSpan={5} className="empty">
+                              No RTP data in this range.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="empty">No RTP data in this range.</div>
+              )}
+            </div>
+
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <h3 className="panel-title">Volatility Heatmap</h3>
+                  <p className="panel-subtitle">
+                    Net variance by game and day.
+                  </p>
+                </div>
+              </div>
+              {performanceError && <div className="alert">{performanceError}</div>}
+              {hasVolatility ? (
+                <div className="stack">
+                  <div className="heatmap-wrap">
+                    <div
+                      className="heatmap-grid"
+                      style={{
+                        gridTemplateColumns: `140px repeat(${Math.max(
+                          volatilityDays.length,
+                          1
+                        )}, 28px)`,
+                      }}
+                    >
+                      <div className="heatmap-label" />
+                      {volatilityDays.map((day, index) => (
+                        <div key={day} className="heatmap-day">
+                          {index % heatmapLabelStep === 0 ? formatDayLabel(day) : ""}
+                        </div>
+                      ))}
+                      {heatmapGames.map((gameId) => (
+                        <React.Fragment key={gameId}>
+                          <div className="heatmap-row-label">{gameId}</div>
+                          {volatilityDays.map((day) => {
+                            const key = `${gameId}__${day}`;
+                            const cell = volatilityMap.get(key);
+                            const value = Number(cell?.volatility || 0);
+                            const rounds = Number(cell?.rounds || 0);
+                            return (
+                              <div
+                                key={key}
+                                className="heatmap-cell"
+                                style={{ backgroundColor: getHeatColor(value, volatilityMax) }}
+                                title={`${gameId} · ${formatDayLabel(day)} · Vol ${formatNumber(
+                                  value
+                                )} · Rounds ${formatNumber(rounds)}`}
+                              />
+                            );
+                          })}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="heatmap-legend">
+                    <span>Low</span>
+                    <div className="heatmap-bar" />
+                    <span>High</span>
+                  </div>
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Day</th>
+                          <th>Game</th>
+                          <th>Volatility</th>
+                          <th>Rounds</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {topVolatilityCells.map((cell) => (
+                          <tr key={`${cell.gameId}-${cell.day}`}>
+                            <td>{formatDayLabel(cell.day)}</td>
+                            <td>{cell.gameId}</td>
+                            <td>{formatNumber(cell.volatility)}</td>
+                            <td>{formatNumber(cell.rounds)}</td>
+                          </tr>
+                        ))}
+                        {!topVolatilityCells.length && (
+                          <tr>
+                            <td colSpan={4} className="empty">
+                              No volatility spikes in this range.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="empty">No volatility data in this range.</div>
+              )}
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <h3 className="panel-title">Spin Volume Over Time</h3>
+                <p className="panel-subtitle">
+                  Dead games show up immediately.
+                  {peakSpinVolume && (
+                    <>
+                      {" "}
+                      Peak {formatDayLabel(peakSpinVolume.day)} (
+                      {formatNumber(peakSpinVolume.spins)} spins)
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+            {performanceError && <div className="alert">{performanceError}</div>}
+            {hasSpinVolume ? (
+              <div className="stack">
+                <div style={{ width: "100%", height: 260 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={spinVolumeSeries}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                      <XAxis
+                        dataKey="day"
+                        stroke="rgba(202,210,224,0.6)"
+                        tickFormatter={formatDayLabel}
+                        minTickGap={18}
+                      />
+                      <YAxis stroke="rgba(202,210,224,0.6)" />
+                      <Tooltip
+                        contentStyle={TOOLTIP_STYLE}
+                        formatter={(value) => formatNumber(value)}
+                        labelFormatter={formatDayLabel}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="spins"
+                        name="Spins"
+                        stroke="#31f58d"
+                        fill="rgba(49, 245, 141, 0.2)"
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Peak Day</th>
+                        <th>Spins</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topSpinDays.map((entry) => (
+                        <tr key={entry.day}>
+                          <td>{formatDayLabel(entry.day)}</td>
+                          <td>{formatNumber(entry.spins)}</td>
+                        </tr>
+                      ))}
+                      {!topSpinDays.length && (
+                        <tr>
+                          <td colSpan={2} className="empty">
+                            No spin spikes in this range.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="empty">No spin volume data in this range.</div>
+            )}
           </div>
         </>
       )}

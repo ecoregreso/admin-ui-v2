@@ -602,6 +602,64 @@ textarea {
   background: rgba(255, 48, 79, 0.08);
 }
 
+.heatmap-wrap {
+  width: 100%;
+  overflow: auto;
+  padding-bottom: 6px;
+}
+
+.heatmap-grid {
+  display: grid;
+  gap: 6px;
+  align-items: center;
+  min-width: 520px;
+}
+
+.heatmap-label,
+.heatmap-day,
+.heatmap-row-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.heatmap-day {
+  text-align: center;
+}
+
+.heatmap-row-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.heatmap-cell {
+  width: 26px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.35);
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.heatmap-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(39, 217, 255, 0.3), rgba(255, 48, 79, 0.85));
+}
+
 .tag {
   display: inline-flex;
   align-items: center;
