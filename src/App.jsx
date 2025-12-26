@@ -12,6 +12,14 @@ import SessionsList from "./pages/SessionsList.jsx";
 import AuditLog from "./pages/AuditLog.jsx";
 import PurchaseOrders from "./pages/PurchaseOrders.jsx";
 import Messages from "./pages/Messages.jsx";
+import AnalyticsOverview from "./pages/analytics/AnalyticsOverview.jsx";
+import AnalyticsRevenue from "./pages/analytics/AnalyticsRevenue.jsx";
+import AnalyticsPlayers from "./pages/analytics/AnalyticsPlayers.jsx";
+import AnalyticsGames from "./pages/analytics/AnalyticsGames.jsx";
+import AnalyticsOps from "./pages/analytics/AnalyticsOps.jsx";
+import AnalyticsFunnel from "./pages/analytics/AnalyticsFunnel.jsx";
+import AnalyticsAudit from "./pages/analytics/AnalyticsAudit.jsx";
+import AnalyticsLtv from "./pages/analytics/AnalyticsLtv.jsx";
 import AdminLayout from "./layout/AdminLayout.jsx";
 import { useStaffAuth } from "./context/StaffAuthContext.jsx";
 
@@ -107,6 +115,70 @@ export default function App() {
             element={
               <RequirePermission permission="finance:read">
                 <ReportsDashboard />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="analytics"
+            element={
+              <RequirePermission permission="finance:read">
+                <AnalyticsOverview />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="analytics/revenue"
+            element={
+              <RequirePermission permission="finance:read">
+                <AnalyticsRevenue />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="analytics/players"
+            element={
+              <RequirePermission permission="finance:read">
+                <AnalyticsPlayers />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="analytics/games"
+            element={
+              <RequirePermission permission="finance:read">
+                <AnalyticsGames />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="analytics/ops"
+            element={
+              <RequirePermission permission="finance:read">
+                <AnalyticsOps />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="analytics/funnel"
+            element={
+              <RequirePermission permission="finance:read">
+                <AnalyticsFunnel />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="analytics/ltv"
+            element={
+              <RequirePermission permission="finance:read">
+                <AnalyticsLtv />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="analytics/audit"
+            element={
+              <RequirePermission permission="finance:read">
+                <AnalyticsAudit />
               </RequirePermission>
             }
           />

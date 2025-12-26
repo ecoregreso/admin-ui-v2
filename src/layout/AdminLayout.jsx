@@ -43,6 +43,19 @@ export default function AdminLayout() {
       ],
     },
     {
+      title: "Analytics",
+      items: [
+        { to: "/analytics", label: "Overview", perms: ["finance:read"] },
+        { to: "/analytics/revenue", label: "Revenue", perms: ["finance:read"] },
+        { to: "/analytics/players", label: "Players", perms: ["finance:read"] },
+        { to: "/analytics/games", label: "Games", perms: ["finance:read"] },
+        { to: "/analytics/ops", label: "Ops", perms: ["finance:read"] },
+        { to: "/analytics/funnel", label: "Funnel", perms: ["finance:read"] },
+        { to: "/analytics/ltv", label: "LTV", perms: ["finance:read"] },
+        { to: "/analytics/audit", label: "Audit", perms: ["finance:read"] },
+      ],
+    },
+    {
       title: "Finance",
       items: [
         { to: "/transactions", label: "Transactions", perms: ["finance:read"] },
