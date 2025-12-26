@@ -22,6 +22,7 @@ import {
 import {
   fetchBehaviorReport,
   fetchDailyReport,
+  fetchOperationsReport,
   fetchPerformanceReport,
   fetchRiskReport,
   fetchRangeReport,
@@ -61,6 +62,17 @@ function formatNumber(n) {
   });
 }
 
+function formatDurationMinutes(value) {
+  if (value == null || Number.isNaN(value)) return "n/a";
+  const minutes = Math.max(0, Number(value));
+  if (minutes >= 60) {
+    const hrs = Math.floor(minutes / 60);
+    const mins = Math.round(minutes % 60);
+    return `${hrs}h ${mins}m`;
+  }
+  return `${Math.round(minutes)}m`;
+}
+
 function getHeatColor(value, max) {
   if (!value || !max) return "rgba(255, 255, 255, 0.04)";
   const ratio = Math.max(0, Math.min(1, value / max));
@@ -82,12 +94,14 @@ export default function ReportsDashboard() {
   const [daily, setDaily] = useState(null);
   const [risk, setRisk] = useState(null);
   const [performance, setPerformance] = useState(null);
+  const [operations, setOperations] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [behaviorError, setBehaviorError] = useState("");
   const [dailyError, setDailyError] = useState("");
   const [riskError, setRiskError] = useState("");
   const [performanceError, setPerformanceError] = useState("");
+  const [operationsError, setOperationsError] = useState("");
 
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -105,21 +119,31 @@ export default function ReportsDashboard() {
     setDailyError("");
     setRiskError("");
     setPerformanceError("");
+    setOperationsError("");
     setLoading(true);
     setReport(null);
     setBehavior(null);
     setDaily(null);
     setRisk(null);
     setPerformance(null);
+    setOperations(null);
 
     try {
-      const [rangeResult, behaviorResult, dailyResult, riskResult, performanceResult] =
+      const [
+        rangeResult,
+        behaviorResult,
+        dailyResult,
+        riskResult,
+        performanceResult,
+        operationsResult,
+      ] =
         await Promise.allSettled([
           fetchRangeReport({ from, to }),
           fetchBehaviorReport({ from, to }),
           fetchDailyReport({ from, to }),
           fetchRiskReport({ from, to }),
           fetchPerformanceReport({ from, to }),
+          fetchOperationsReport({ from, to }),
         ]);
 
       if (rangeResult.status === "fulfilled") {
@@ -181,6 +205,20 @@ export default function ReportsDashboard() {
         console.error("[ReportsDashboard] performance error:", performanceResult.reason);
         setPerformanceError(
           performanceResult.reason?.message || "Failed to load game performance"
+        );
+      }
+
+      if (operationsResult.status === "fulfilled") {
+        const data = operationsResult.value;
+        if (!data.ok) {
+          setOperationsError(data.error || "Failed to load operations metrics");
+        } else {
+          setOperations(data);
+        }
+      } else {
+        console.error("[ReportsDashboard] operations error:", operationsResult.reason);
+        setOperationsError(
+          operationsResult.reason?.message || "Failed to load operations metrics"
         );
       }
     } catch (err) {
@@ -340,6 +378,49 @@ export default function ReportsDashboard() {
     [risk]
   );
 
+  const opsSystemSeries = useMemo(
+    () => operations?.systemHealth?.days || [],
+    [operations]
+  );
+
+  const opsStaleMinutes = operations?.systemHealth?.staleMinutes || 0;
+
+  const cashierSeries = useMemo(
+    () => operations?.cashierPerformance?.days || [],
+    [operations]
+  );
+
+  const cashierTotals = operations?.cashierPerformance?.totals || null;
+
+  const resolutionCategories = useMemo(() => {
+    const categories = operations?.resolution?.categories || [];
+    return categories.filter((category) => category.count);
+  }, [operations]);
+
+  const resolutionScaleMax = useMemo(() => {
+    if (!resolutionCategories.length) return 0;
+    return resolutionCategories.reduce((max, category) => {
+      const value = Number(category.max || 0);
+      return value > max ? value : max;
+    }, 0);
+  }, [resolutionCategories]);
+
+  const topOpsDays = useMemo(
+    () =>
+      [...opsSystemSeries]
+        .sort((a, b) => (b.failedBets || 0) - (a.failedBets || 0))
+        .slice(0, 5),
+    [opsSystemSeries]
+  );
+
+  const topCashierDays = useMemo(
+    () =>
+      [...cashierSeries]
+        .sort((a, b) => (b.issued || 0) - (a.issued || 0))
+        .slice(0, 5),
+    [cashierSeries]
+  );
+
   const performanceRtpGames = useMemo(
     () => performance?.rtpByGame?.games || [],
     [performance]
@@ -490,6 +571,21 @@ export default function ReportsDashboard() {
   const hasAccountVelocity = useMemo(
     () => accountDaily.some((point) => point.count) || accountHourly.some((point) => point.count),
     [accountDaily, accountHourly]
+  );
+
+  const hasOpsSystem = useMemo(
+    () => opsSystemSeries.some((point) => point.pendingBets || point.failedBets),
+    [opsSystemSeries]
+  );
+
+  const hasCashierPerf = useMemo(
+    () => cashierSeries.some((point) => point.issued || point.redeemed || point.expired),
+    [cashierSeries]
+  );
+
+  const hasResolution = useMemo(
+    () => resolutionCategories.some((category) => category.count),
+    [resolutionCategories]
   );
 
   const hasRtp = useMemo(
@@ -1282,6 +1378,263 @@ export default function ReportsDashboard() {
                 <div className="empty">No account velocity data in this range.</div>
               )}
             </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <h3 className="panel-title">Operational Intelligence</h3>
+                <p className="panel-subtitle">
+                  The "nothing broke today" dashboard for day-to-day stability.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid-2">
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <h3 className="panel-title">System Errors / Failed Bets</h3>
+                  <p className="panel-subtitle">
+                    Pending rounds vs stale bets (pending &gt; {opsStaleMinutes}m).
+                  </p>
+                </div>
+              </div>
+              {operationsError && <div className="alert">{operationsError}</div>}
+              {hasOpsSystem ? (
+                <div className="stack">
+                  <div style={{ width: "100%", height: 240 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={opsSystemSeries}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                        <XAxis
+                          dataKey="day"
+                          stroke="rgba(202,210,224,0.6)"
+                          tickFormatter={formatDayLabel}
+                          minTickGap={18}
+                        />
+                        <YAxis stroke="rgba(202,210,224,0.6)" />
+                        <Tooltip
+                          contentStyle={TOOLTIP_STYLE}
+                          formatter={(value) => formatNumber(value)}
+                          labelFormatter={formatDayLabel}
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="pendingBets"
+                          name="Pending"
+                          stroke="#27d9ff"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="failedBets"
+                          name="Failed (stale)"
+                          stroke="#ff304f"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Day</th>
+                          <th>Pending</th>
+                          <th>Failed</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {topOpsDays.map((day) => (
+                          <tr key={day.day}>
+                            <td>{formatDayLabel(day.day)}</td>
+                            <td>{formatNumber(day.pendingBets)}</td>
+                            <td>{formatNumber(day.failedBets)}</td>
+                          </tr>
+                        ))}
+                        {!topOpsDays.length && (
+                          <tr>
+                            <td colSpan={3} className="empty">
+                              No error spikes in this range.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="empty">No system error data in this range.</div>
+              )}
+            </div>
+
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <h3 className="panel-title">Cashier Performance</h3>
+                  <p className="panel-subtitle">
+                    Vouchers issued, redeemed, and expired.
+                    {cashierTotals && (
+                      <>
+                        {" "}
+                        Issued {formatNumber(cashierTotals.issued)} · Redeemed{" "}
+                        {formatNumber(cashierTotals.redeemed)} · Expired{" "}
+                        {formatNumber(cashierTotals.expired)}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+              {operationsError && <div className="alert">{operationsError}</div>}
+              {hasCashierPerf ? (
+                <div className="stack">
+                  <div style={{ width: "100%", height: 240 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={cashierSeries}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                        <XAxis
+                          dataKey="day"
+                          stroke="rgba(202,210,224,0.6)"
+                          tickFormatter={formatDayLabel}
+                          minTickGap={18}
+                        />
+                        <YAxis stroke="rgba(202,210,224,0.6)" />
+                        <Tooltip
+                          contentStyle={TOOLTIP_STYLE}
+                          formatter={(value) => formatNumber(value)}
+                          labelFormatter={formatDayLabel}
+                        />
+                        <Legend />
+                        <Bar dataKey="issued" name="Issued" fill="#27d9ff" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="redeemed" name="Redeemed" fill="#31f58d" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="expired" name="Expired" fill="#ff304f" radius={[6, 6, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Day</th>
+                          <th>Issued</th>
+                          <th>Redeemed</th>
+                          <th>Expired</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {topCashierDays.map((day) => (
+                          <tr key={day.day}>
+                            <td>{formatDayLabel(day.day)}</td>
+                            <td>{formatNumber(day.issued)}</td>
+                            <td>{formatNumber(day.redeemed)}</td>
+                            <td>{formatNumber(day.expired)}</td>
+                          </tr>
+                        ))}
+                        {!topCashierDays.length && (
+                          <tr>
+                            <td colSpan={4} className="empty">
+                              No cashier activity in this range.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="empty">No cashier data in this range.</div>
+              )}
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <h3 className="panel-title">Time-to-Resolution (Support / Cashier)</h3>
+                <p className="panel-subtitle">
+                  Resolution latency by staff role (minutes).
+                </p>
+              </div>
+            </div>
+            {operationsError && <div className="alert">{operationsError}</div>}
+            {hasResolution ? (
+              <div className="stack">
+                <div className="boxplot">
+                  {resolutionCategories.map((category) => (
+                    <div className="boxplot-row" key={category.name}>
+                      <div className="boxplot-label">{category.name}</div>
+                      <div className="boxplot-track">
+                        <div
+                          className="boxplot-whisker"
+                          style={{
+                            left: `${(Number(category.min || 0) / (resolutionScaleMax || 1)) * 100}%`,
+                            width: `${((Number(category.max || 0) - Number(category.min || 0)) / (resolutionScaleMax || 1)) * 100}%`,
+                          }}
+                        />
+                        <div
+                          className="boxplot-box"
+                          style={{
+                            left: `${(Number(category.q1 || 0) / (resolutionScaleMax || 1)) * 100}%`,
+                            width: `${((Number(category.q3 || 0) - Number(category.q1 || 0)) / (resolutionScaleMax || 1)) * 100}%`,
+                          }}
+                        />
+                        <div
+                          className="boxplot-median"
+                          style={{
+                            left: `${(Number(category.median || 0) / (resolutionScaleMax || 1)) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <div className="boxplot-meta">
+                        {formatDurationMinutes(category.median)} · {formatNumber(category.count)} samples
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Role</th>
+                        <th>Min</th>
+                        <th>Q1</th>
+                        <th>Median</th>
+                        <th>Q3</th>
+                        <th>Max</th>
+                        <th>Count</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {resolutionCategories.map((category) => (
+                        <tr key={`row-${category.name}`}>
+                          <td>{category.name}</td>
+                          <td>{formatDurationMinutes(category.min)}</td>
+                          <td>{formatDurationMinutes(category.q1)}</td>
+                          <td>{formatDurationMinutes(category.median)}</td>
+                          <td>{formatDurationMinutes(category.q3)}</td>
+                          <td>{formatDurationMinutes(category.max)}</td>
+                          <td>{formatNumber(category.count)}</td>
+                        </tr>
+                      ))}
+                      {!resolutionCategories.length && (
+                        <tr>
+                          <td colSpan={7} className="empty">
+                            No resolution data in this range.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="empty">No resolution data in this range.</div>
+            )}
           </div>
 
           <div className="panel">
