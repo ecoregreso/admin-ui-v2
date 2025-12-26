@@ -13,10 +13,16 @@ import {
   Area,
   Cell,
   Legend,
+  ScatterChart,
+  Scatter,
+  ZAxis,
+  PieChart,
+  Pie,
 } from "recharts";
 import {
   fetchBehaviorReport,
   fetchDailyReport,
+  fetchRiskReport,
   fetchRangeReport,
 } from "../api/reportsApi";
 
@@ -33,6 +39,13 @@ function formatDayLabel(value) {
   const date = new Date(`${value}T00:00:00Z`);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function formatHourLabel(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric" });
 }
 
 function formatPercent(value) {
@@ -54,10 +67,12 @@ export default function ReportsDashboard() {
   const [report, setReport] = useState(null);
   const [behavior, setBehavior] = useState(null);
   const [daily, setDaily] = useState(null);
+  const [risk, setRisk] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [behaviorError, setBehaviorError] = useState("");
   const [dailyError, setDailyError] = useState("");
+  const [riskError, setRiskError] = useState("");
 
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -73,16 +88,19 @@ export default function ReportsDashboard() {
     setError("");
     setBehaviorError("");
     setDailyError("");
+    setRiskError("");
     setLoading(true);
     setReport(null);
     setBehavior(null);
     setDaily(null);
+    setRisk(null);
 
     try {
-      const [rangeResult, behaviorResult, dailyResult] = await Promise.allSettled([
+      const [rangeResult, behaviorResult, dailyResult, riskResult] = await Promise.allSettled([
         fetchRangeReport({ from, to }),
         fetchBehaviorReport({ from, to }),
         fetchDailyReport({ from, to }),
+        fetchRiskReport({ from, to }),
       ]);
 
       if (rangeResult.status === "fulfilled") {
@@ -119,6 +137,18 @@ export default function ReportsDashboard() {
       } else {
         console.error("[ReportsDashboard] daily error:", dailyResult.reason);
         setDailyError(dailyResult.reason?.message || "Failed to load daily rollups");
+      }
+
+      if (riskResult.status === "fulfilled") {
+        const data = riskResult.value;
+        if (!data.ok) {
+          setRiskError(data.error || "Failed to load risk signals");
+        } else {
+          setRisk(data);
+        }
+      } else {
+        console.error("[ReportsDashboard] risk error:", riskResult.reason);
+        setRiskError(riskResult.reason?.message || "Failed to load risk signals");
       }
     } catch (err) {
       console.error("[ReportsDashboard] error:", err);
@@ -224,6 +254,69 @@ export default function ReportsDashboard() {
     [behavior]
   );
 
+  const winRatePoints = useMemo(() => {
+    const players = risk?.winRateOutliers?.players || [];
+    return players.map((player, index) => ({
+      ...player,
+      index: index + 1,
+    }));
+  }, [risk]);
+
+  const winRateOutliers = useMemo(
+    () => winRatePoints.filter((player) => player.isOutlier),
+    [winRatePoints]
+  );
+
+  const winRateNormals = useMemo(
+    () => winRatePoints.filter((player) => !player.isOutlier),
+    [winRatePoints]
+  );
+
+  const bonusSummary = risk?.bonusAbuse || null;
+
+  const bonusPieData = useMemo(() => {
+    if (!bonusSummary) return [];
+    return [
+      { name: "Legit", value: bonusSummary.legit?.count || 0 },
+      { name: "Flagged", value: bonusSummary.flagged?.count || 0 },
+    ];
+  }, [bonusSummary]);
+
+  const bonusFlaggedAccounts = useMemo(() => {
+    const accounts = risk?.bonusAbuse?.accounts || [];
+    return accounts.filter((account) => account.status === "flagged");
+  }, [risk]);
+
+  const geoCountries = useMemo(
+    () => risk?.geography?.countries || [],
+    [risk]
+  );
+
+  const geoPieData = useMemo(
+    () => geoCountries.map((entry) => ({ name: entry.country, value: entry.count })),
+    [geoCountries]
+  );
+
+  const accountDaily = useMemo(
+    () => risk?.accountVelocity?.daily || [],
+    [risk]
+  );
+
+  const accountHourly = useMemo(
+    () => risk?.accountVelocity?.hourly || [],
+    [risk]
+  );
+
+  const peakDaily = useMemo(() => {
+    if (!accountDaily.length) return null;
+    return accountDaily.reduce((max, entry) => (entry.count > max.count ? entry : max));
+  }, [accountDaily]);
+
+  const peakHourly = useMemo(() => {
+    if (!accountHourly.length) return null;
+    return accountHourly.reduce((max, entry) => (entry.count > max.count ? entry : max));
+  }, [accountHourly]);
+
   const hasCashflow = useMemo(
     () => cashflowSeries.some((point) => point.deposits || point.withdrawals),
     [cashflowSeries]
@@ -248,6 +341,41 @@ export default function ReportsDashboard() {
     () => betSizeSeries.some((point) => point.value),
     [betSizeSeries]
   );
+
+  const hasWinRate = useMemo(
+    () => winRatePoints.length > 0,
+    [winRatePoints]
+  );
+
+  const hasBonusAbuse = useMemo(
+    () => bonusPieData.some((slice) => slice.value),
+    [bonusPieData]
+  );
+
+  const hasGeo = useMemo(
+    () => geoPieData.some((slice) => slice.value),
+    [geoPieData]
+  );
+
+  const hasAccountVelocity = useMemo(
+    () => accountDaily.some((point) => point.count) || accountHourly.some((point) => point.count),
+    [accountDaily, accountHourly]
+  );
+
+  const renderWinRateTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null;
+    const data = payload[0].payload || {};
+    return (
+      <div style={TOOLTIP_STYLE}>
+        <div>Player: {data.playerId}</div>
+        <div>RTP: {formatPercent((data.rtp || 0) * 100)}</div>
+        <div>Deviation: {formatPercent((data.deviation || 0) * 100)}</div>
+        <div>Total Bet: {formatNumber(data.totalBet)}</div>
+        <div>Total Win: {formatNumber(data.totalWin)}</div>
+        <div>Rounds: {formatNumber(data.rounds)}</div>
+      </div>
+    );
+  };
 
   return (
     <div className="page">
@@ -724,6 +852,289 @@ export default function ReportsDashboard() {
                 </div>
               ) : (
                 <div className="empty">No bet size data in this range.</div>
+              )}
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <h3 className="panel-title">Risk, Fraud & Abuse</h3>
+                <p className="panel-subtitle">
+                  Signals that prevent catastrophic loss before it escalates.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid-2">
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <h3 className="panel-title">Win Rate Outliers</h3>
+                  <p className="panel-subtitle">
+                    Player RTP deviation from baseline.
+                    {risk?.winRateOutliers && (
+                      <>
+                        {" "}
+                        Baseline {formatPercent((risk.winRateOutliers.baselineRtp || 0) * 100)} ·
+                        Outlier ±{formatPercent((risk.winRateOutliers.deviationThreshold || 0) * 100)} ·
+                        Min bet {formatNumber(risk.winRateOutliers.minBet)}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+              {riskError && <div className="alert">{riskError}</div>}
+              {hasWinRate ? (
+                <div style={{ width: "100%", height: 280 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ScatterChart>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                      <XAxis
+                        dataKey="index"
+                        name="Player"
+                        stroke="rgba(202,210,224,0.6)"
+                        tick={false}
+                      />
+                      <YAxis
+                        dataKey="deviation"
+                        stroke="rgba(202,210,224,0.6)"
+                        tickFormatter={(value) => formatPercent(value * 100)}
+                      />
+                      <ZAxis dataKey="totalBet" range={[40, 160]} />
+                      <Tooltip content={renderWinRateTooltip} />
+                      <Scatter data={winRateNormals} fill="rgba(39, 217, 255, 0.45)" />
+                      <Scatter data={winRateOutliers} fill="#ff304f" />
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="empty">No win rate data in this range.</div>
+              )}
+            </div>
+
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <h3 className="panel-title">Bonus Abuse Indicators</h3>
+                  <p className="panel-subtitle">
+                    Legit vs flagged accounts by bonus behavior.
+                    {risk?.bonusAbuse?.criteria && (
+                      <>
+                        {" "}
+                        Min bonus {formatNumber(risk.bonusAbuse.criteria.minBonus)} ·
+                        Bonus ratio ≥{formatPercent((risk.bonusAbuse.criteria.bonusRatioThreshold || 0) * 100)} ·
+                        Bonus / bet ≥{formatPercent((risk.bonusAbuse.criteria.bonusToBetThreshold || 0) * 100)}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+              {riskError && <div className="alert">{riskError}</div>}
+              {hasBonusAbuse ? (
+                <div className="stack">
+                  <div style={{ width: "100%", height: 220 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={bonusPieData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={2}
+                        >
+                          {bonusPieData.map((entry) => (
+                            <Cell
+                              key={`bonus-${entry.name}`}
+                              fill={entry.name === "Flagged" ? "#ff304f" : "#27d9ff"}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={TOOLTIP_STYLE}
+                          formatter={(value) => formatNumber(value)}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Player</th>
+                          <th>Redemptions</th>
+                          <th>Total Bonus</th>
+                          <th>Bonus Ratio</th>
+                          <th>Bonus / Bet</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bonusFlaggedAccounts.map((account) => (
+                          <tr key={account.playerId}>
+                            <td>{String(account.playerId).slice(0, 10)}</td>
+                            <td>{formatNumber(account.redemptions)}</td>
+                            <td>{formatNumber(account.totalBonus)}</td>
+                            <td>{formatPercent(account.bonusRatio * 100)}</td>
+                            <td>{formatPercent(account.bonusToBetRatio * 100)}</td>
+                          </tr>
+                        ))}
+                        {!bonusFlaggedAccounts.length && (
+                          <tr>
+                            <td colSpan={5} className="empty">
+                              No flagged bonus activity in this range.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="empty">No bonus abuse data in this range.</div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid-2">
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <h3 className="panel-title">Geographic Anomalies</h3>
+                  <p className="panel-subtitle">
+                    Session distribution by country.
+                    {risk?.geography && (
+                      <>
+                        {" "}
+                        Total {formatNumber(risk.geography.total)} ·
+                        Unknown {formatNumber(risk.geography.unknown)}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+              {riskError && <div className="alert">{riskError}</div>}
+              {hasGeo ? (
+                <div className="stack">
+                  <div style={{ width: "100%", height: 220 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={geoPieData}
+                          dataKey="value"
+                          nameKey="name"
+                          outerRadius={85}
+                          paddingAngle={1}
+                        >
+                          {geoPieData.map((entry, index) => (
+                            <Cell
+                              key={`geo-${entry.name}`}
+                              fill={index % 2 === 0 ? "#27d9ff" : "#f6c453"}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={TOOLTIP_STYLE}
+                          formatter={(value) => formatNumber(value)}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Country</th>
+                          <th>Sessions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {geoCountries.map((entry) => (
+                          <tr key={entry.country}>
+                            <td>{entry.country}</td>
+                            <td>{formatNumber(entry.count)}</td>
+                          </tr>
+                        ))}
+                        {!geoCountries.length && (
+                          <tr>
+                            <td colSpan={2} className="empty">
+                              No session locations in this range.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="empty">No geographic data in this range.</div>
+              )}
+            </div>
+
+            <div className="panel">
+              <div className="panel-header">
+                <div>
+                  <h3 className="panel-title">Account Velocity</h3>
+                  <p className="panel-subtitle">
+                    Accounts created per day and hour.
+                    {peakDaily && peakHourly && (
+                      <>
+                        {" "}
+                        Peak day {formatDayLabel(peakDaily.day)} ({formatNumber(peakDaily.count)}) ·
+                        Peak hour {formatHourLabel(peakHourly.hour)} ({formatNumber(peakHourly.count)})
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+              {riskError && <div className="alert">{riskError}</div>}
+              {hasAccountVelocity ? (
+                <div className="stack">
+                  <div style={{ width: "100%", height: 200 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={accountDaily}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                        <XAxis
+                          dataKey="day"
+                          stroke="rgba(202,210,224,0.6)"
+                          tickFormatter={formatDayLabel}
+                          minTickGap={18}
+                        />
+                        <YAxis stroke="rgba(202,210,224,0.6)" />
+                        <Tooltip
+                          contentStyle={TOOLTIP_STYLE}
+                          formatter={(value) => formatNumber(value)}
+                          labelFormatter={formatDayLabel}
+                        />
+                        <Line type="monotone" dataKey="count" stroke="#27d9ff" strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div style={{ width: "100%", height: 200 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={accountHourly}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                        <XAxis
+                          dataKey="hour"
+                          stroke="rgba(202,210,224,0.6)"
+                          tickFormatter={formatHourLabel}
+                          minTickGap={30}
+                        />
+                        <YAxis stroke="rgba(202,210,224,0.6)" />
+                        <Tooltip
+                          contentStyle={TOOLTIP_STYLE}
+                          formatter={(value) => formatNumber(value)}
+                          labelFormatter={formatHourLabel}
+                        />
+                        <Bar dataKey="count" fill="#f6c453" radius={[6, 6, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              ) : (
+                <div className="empty">No account velocity data in this range.</div>
               )}
             </div>
           </div>

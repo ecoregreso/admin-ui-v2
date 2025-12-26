@@ -24,3 +24,10 @@ export async function fetchBehaviorReport({ from, to }) {
   });
   return res.data;
 }
+
+export async function fetchRiskReport({ from, to }) {
+  const res = await api.get("/api/v1/admin/reports/risk", {
+    params: { from, to, start: from, end: to },
+  });
+  return res.data;
+}
