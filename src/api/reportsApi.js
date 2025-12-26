@@ -6,7 +6,21 @@ import api from "./client";
  */
 export async function fetchRangeReport({ from, to }) {
   const res = await api.get("/api/v1/admin/reports/range", {
-    params: { from, to },
+    params: { from, to, start: from, end: to },
+  });
+  return res.data;
+}
+
+export async function fetchDailyReport({ from, to }) {
+  const res = await api.get("/api/v1/admin/reports/daily", {
+    params: { from, to, start: from, end: to },
+  });
+  return res.data;
+}
+
+export async function fetchBehaviorReport({ from, to }) {
+  const res = await api.get("/api/v1/admin/reports/behavior", {
+    params: { from, to, start: from, end: to },
   });
   return res.data;
 }
