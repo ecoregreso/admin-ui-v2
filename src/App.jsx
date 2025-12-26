@@ -12,6 +12,7 @@ import SessionsList from "./pages/SessionsList.jsx";
 import AuditLog from "./pages/AuditLog.jsx";
 import PurchaseOrders from "./pages/PurchaseOrders.jsx";
 import Messages from "./pages/Messages.jsx";
+import SafetyDashboard from "./pages/SafetyDashboard.jsx";
 import AnalyticsOverview from "./pages/analytics/AnalyticsOverview.jsx";
 import AnalyticsRevenue from "./pages/analytics/AnalyticsRevenue.jsx";
 import AnalyticsPlayers from "./pages/analytics/AnalyticsPlayers.jsx";
@@ -115,6 +116,14 @@ export default function App() {
             element={
               <RequirePermission permission="finance:read">
                 <ReportsDashboard />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="safety"
+            element={
+              <RequirePermission permission="player:read">
+                <SafetyDashboard />
               </RequirePermission>
             }
           />

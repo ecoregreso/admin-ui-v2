@@ -43,6 +43,10 @@ export default function AdminLayout() {
       ],
     },
     {
+      title: "Safety",
+      items: [{ to: "/safety", label: "Safety", perms: ["player:read"] }],
+    },
+    {
       title: "Analytics",
       items: [
         { to: "/analytics", label: "Overview", perms: ["finance:read"] },
