@@ -12,6 +12,7 @@ import {
   Legend,
 } from "recharts";
 import AnalyticsFilters from "../../components/AnalyticsFilters.jsx";
+import InfoTooltip from "../../components/InfoTooltip.jsx";
 import { fetchAnalyticsOps } from "../../api/analyticsApi";
 import {
   formatBucketLabel,
@@ -107,14 +108,20 @@ export default function AnalyticsOps() {
 
       <div className="grid-2">
         <div className="panel">
-        <div className="panel-header">
-          <div>
-            <h3 className="panel-title">System Errors / Failed Bets</h3>
-            <p className="panel-subtitle">
-              Failed bets are pending rounds &gt; {staleMinutes}m.
-            </p>
+          <div className="panel-header">
+            <div>
+              <div className="panel-title-row">
+                <h3 className="panel-title">System Errors / Failed Bets</h3>
+                <InfoTooltip
+                  title="System Errors"
+                  content="Errors and failed bets over time. Failed bets are pending rounds older than the stale threshold."
+                />
+              </div>
+              <p className="panel-subtitle">
+                Failed bets are pending rounds &gt; {staleMinutes}m.
+              </p>
+            </div>
           </div>
-        </div>
           {errorsSeries.length ? (
             <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -143,7 +150,13 @@ export default function AnalyticsOps() {
 
         <div className="panel">
           <div className="panel-header">
-            <h3 className="panel-title">Top Error Routes</h3>
+            <div className="panel-title-row">
+              <h3 className="panel-title">Top Error Routes</h3>
+              <InfoTooltip
+                title="Top Error Routes"
+                content="Endpoints producing the most errors in the selected range. Fixing these reduces ops noise fastest."
+              />
+            </div>
           </div>
           {topRoutes.length ? (
             <div className="table-wrap">
@@ -173,7 +186,13 @@ export default function AnalyticsOps() {
       <div className="panel">
         <div className="panel-header">
           <div>
-            <h3 className="panel-title">Cashier Performance</h3>
+            <div className="panel-title-row">
+              <h3 className="panel-title">Cashier Performance</h3>
+              <InfoTooltip
+                title="Cashier Performance"
+                content="Vouchers issued, redeemed, and expired per bucket. Highlights cash handling efficiency and leakage."
+              />
+            </div>
             <p className="panel-subtitle">
               Issued {formatNumber(totals.issued)} · Redeemed {formatNumber(totals.redeemed)} ·
               Expired {formatNumber(totals.expired)}

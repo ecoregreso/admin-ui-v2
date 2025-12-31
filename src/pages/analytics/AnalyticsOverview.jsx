@@ -15,6 +15,7 @@ import {
   Bar,
 } from "recharts";
 import AnalyticsFilters from "../../components/AnalyticsFilters.jsx";
+import InfoTooltip from "../../components/InfoTooltip.jsx";
 import { fetchAnalyticsAttribution, fetchAnalyticsOverview } from "../../api/analyticsApi";
 import {
   formatBucketLabel,
@@ -106,7 +107,13 @@ export default function AnalyticsOverview() {
 
       <div className="inline" style={{ justifyContent: "space-between" }}>
         <div>
-          <h2 className="panel-title">Operator Intelligence Overview</h2>
+          <div className="panel-title-row">
+            <h2 className="panel-title">Operator Intelligence Overview</h2>
+            <InfoTooltip
+              title="Overview"
+              content="High-level KPIs for revenue and player activity. Use Truth Mode to show concentration and spike dependence metrics."
+            />
+          </div>
           <p className="panel-subtitle">Revenue oxygen, player activity, and truth mode ratios.</p>
         </div>
         <label className="inline" style={{ gap: 8 }}>
@@ -180,9 +187,15 @@ export default function AnalyticsOverview() {
 
       <div className="grid-2">
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">NGR + Handle + Payout</h3>
+            <InfoTooltip
+              title="NGR / Handle / Payout"
+              content="Tracks bet volume (handle), payouts, and net gaming revenue over time using your selected bucket."
+            />
           </div>
+        </div>
           {seriesData.length ? (
             <div style={{ width: "100%", height: 260 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -212,9 +225,15 @@ export default function AnalyticsOverview() {
         </div>
 
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Revenue by Game</h3>
+            <InfoTooltip
+              title="Revenue by Game"
+              content="Top games by bets, wins, and NGR. Use this to spot star performers and underperformers."
+            />
           </div>
+        </div>
           {revenueByGame.length ? (
             <div style={{ width: "100%", height: 260 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -247,7 +266,13 @@ export default function AnalyticsOverview() {
 
       <div className="panel">
         <div className="panel-header">
-          <h3 className="panel-title">Top Games</h3>
+          <div className="panel-title-row">
+            <h3 className="panel-title">Top Games</h3>
+            <InfoTooltip
+              title="Top Game Table"
+              content="Tabular view of bets, wins, NGR, and spins to complement the revenue by game chart."
+            />
+          </div>
         </div>
         {topGames.length ? (
           <div className="stack">
@@ -294,7 +319,13 @@ export default function AnalyticsOverview() {
 
       <div className="panel">
         <div className="panel-header">
-          <h3 className="panel-title">What Actually Caused This?</h3>
+          <div className="panel-title-row">
+            <h3 className="panel-title">What Actually Caused This?</h3>
+            <InfoTooltip
+              title="Attribution"
+              content="Explains the biggest contributors to NGR changes versus the prior period: game shifts, deposit swings, sessions, or payout spikes."
+            />
+          </div>
         </div>
         {attributionFactors.length ? (
           <div className="table-wrap">

@@ -12,6 +12,7 @@ import {
   Area,
 } from "recharts";
 import AnalyticsFilters from "../../components/AnalyticsFilters.jsx";
+import InfoTooltip from "../../components/InfoTooltip.jsx";
 import { fetchAnalyticsGames } from "../../api/analyticsApi";
 import {
   formatBucketLabel,
@@ -122,9 +123,15 @@ export default function AnalyticsGames() {
 
       <div className="grid-2">
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">RTP Actual vs Expected</h3>
+            <InfoTooltip
+              title="RTP Actual vs Expected"
+              content="Compare live RTP to configured expected RTP per game. Deviations can indicate volatility or defects."
+            />
           </div>
+        </div>
           {rtpChartData.length ? (
             <div className="stack">
               <div style={{ width: "100%", height: 240 }}>
@@ -175,9 +182,15 @@ export default function AnalyticsGames() {
         </div>
 
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Spin Volume Over Time</h3>
+            <InfoTooltip
+              title="Spin Volume"
+              content="Spins per bucket by game, useful for spotting dead content and promo lift."
+            />
           </div>
+        </div>
           {spinVolume.length ? (
             <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -213,7 +226,13 @@ export default function AnalyticsGames() {
 
       <div className="panel">
         <div className="panel-header">
-          <h3 className="panel-title">Volatility Heatmap</h3>
+          <div className="panel-title-row">
+            <h3 className="panel-title">Volatility Heatmap</h3>
+            <InfoTooltip
+              title="Volatility Heatmap"
+              content="Variance proxy per game/bucket. Bright cells mean heavier swings; monitor player mood impact."
+            />
+          </div>
         </div>
         {volatilityTimes.length && volatilityGames.length ? (
           <div className="stack">

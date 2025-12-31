@@ -9,6 +9,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import AnalyticsFilters from "../../components/AnalyticsFilters.jsx";
+import InfoTooltip from "../../components/InfoTooltip.jsx";
 import { fetchAnalyticsFunnel } from "../../api/analyticsApi";
 import { formatNumber } from "../../utils/analyticsFormat";
 
@@ -78,7 +79,13 @@ export default function AnalyticsFunnel() {
       <div className="panel">
         <div className="panel-header">
           <div>
-            <h3 className="panel-title">Behavioral Funnel</h3>
+            <div className="panel-title-row">
+              <h3 className="panel-title">Behavioral Funnel</h3>
+              <InfoTooltip
+                title="Behavioral Funnel"
+                content="Login → Deposit/Voucher → Play → Cashout/Logout → Return within 7 days. Each bar shows counts per step in the selected window."
+              />
+            </div>
             <p className="panel-subtitle">
               Return rate within 7 days: {(returnRate * 100).toFixed(1)}%
             </p>

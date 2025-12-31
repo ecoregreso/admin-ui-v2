@@ -18,6 +18,7 @@ import {
   Cell,
 } from "recharts";
 import AnalyticsFilters from "../../components/AnalyticsFilters.jsx";
+import InfoTooltip from "../../components/InfoTooltip.jsx";
 import { fetchAnalyticsPlayers } from "../../api/analyticsApi";
 import {
   formatBucketLabel,
@@ -148,9 +149,15 @@ export default function AnalyticsPlayers() {
 
       <div className="grid-2">
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Active Users</h3>
+            <InfoTooltip
+              title="DAU / WAU / MAU"
+              content="Players with bet or spin activity in each bucket. Flat means stagnant; spikes show promotions or outages."
+            />
           </div>
+        </div>
           {hasActive ? (
             <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -177,9 +184,15 @@ export default function AnalyticsPlayers() {
         </div>
 
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Retention (D1 / D7 / D30)</h3>
+            <InfoTooltip
+              title="Retention Cohorts"
+              content="Percent of players returning on day 1, 7, and 30 after first activity. Use this to track sticky growth vs. leaky buckets."
+            />
           </div>
+        </div>
           {hasRetention ? (
             <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -207,9 +220,15 @@ export default function AnalyticsPlayers() {
 
       <div className="grid-2">
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Session Length Distribution</h3>
+            <InfoTooltip
+              title="Session Lengths"
+              content="Histogram of session durations. Long tails can mean deep engagement or risk flags; ultra-short spikes can indicate churn."
+            />
           </div>
+        </div>
           {hasSessions ? (
             <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -228,9 +247,15 @@ export default function AnalyticsPlayers() {
         </div>
 
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Bet Size Distribution</h3>
+            <InfoTooltip
+              title="Bet Sizes"
+              content="Box view of bet sizes to spot whales vs. casuals and sudden stake jumps."
+            />
           </div>
+        </div>
           {hasBets ? (
             <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -251,7 +276,13 @@ export default function AnalyticsPlayers() {
 
       <div className="panel">
         <div className="panel-header">
-          <h3 className="panel-title">High Value Players</h3>
+          <div className="panel-title-row">
+            <h3 className="panel-title">High Value Players</h3>
+            <InfoTooltip
+              title="High Value Players"
+              content="Top contributors by NGR (IDs masked). Helps monitor whale dependency and fraud risk."
+            />
+          </div>
         </div>
         {highValue.length ? (
           <div className="table-wrap">
@@ -283,15 +314,27 @@ export default function AnalyticsPlayers() {
 
       <div className="panel">
         <div className="panel-header">
-          <h3 className="panel-title">Risk & Abuse Signals</h3>
+          <div className="panel-title-row">
+            <h3 className="panel-title">Risk & Abuse Signals</h3>
+            <InfoTooltip
+              title="Risk Signals"
+              content="Operator-side anomaly monitors: win-rate outliers, geo spikes, account velocity, and session velocity."
+            />
+          </div>
         </div>
       </div>
 
       <div className="grid-2">
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Win Rate Outliers</h3>
+            <InfoTooltip
+              title="Win Rate Outliers"
+              content="Players whose RTP deviates heavily from expected. Use spins and z-score columns to triage."
+            />
           </div>
+        </div>
           {hasWinRate ? (
             <div style={{ width: "100%", height: 260 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -324,9 +367,15 @@ export default function AnalyticsPlayers() {
         </div>
 
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Geographic Anomalies</h3>
+            <InfoTooltip
+              title="Geographic Anomalies"
+              content="Regions contributing unusual traffic or net positions versus baseline; flags VPN farms or region shifts."
+            />
           </div>
+        </div>
           {hasGeo ? (
             <div className="stack">
               <div style={{ width: "100%", height: 220 }}>
@@ -378,9 +427,15 @@ export default function AnalyticsPlayers() {
 
       <div className="grid-2">
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Account Velocity</h3>
+            <InfoTooltip
+              title="Account Velocity"
+              content="Accounts created per bucket. Sudden spikes without marketing may indicate scripted signups."
+            />
           </div>
+        </div>
           {hasVelocity ? (
             <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -408,9 +463,15 @@ export default function AnalyticsPlayers() {
         </div>
 
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Session Velocity</h3>
+            <InfoTooltip
+              title="Session Velocity"
+              content="Sessions started per bucket. Spikes can signal promos, bots, or outages recovering."
+            />
           </div>
+        </div>
           {hasVelocity ? (
             <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -439,7 +500,13 @@ export default function AnalyticsPlayers() {
 
       <div className="panel">
         <div className="panel-header">
-          <h3 className="panel-title">Bonus Abuse Indicators</h3>
+          <div className="panel-title-row">
+            <h3 className="panel-title">Bonus Abuse Indicators</h3>
+            <InfoTooltip
+              title="Bonus Abuse"
+              content="If bonuses exist, shows flagged vs legit patterns. Empty when bonus system is not configured."
+            />
+          </div>
         </div>
         {bonusAbuse?.rows?.length ? (
           <div className="table-wrap">

@@ -14,6 +14,7 @@ import {
   Legend,
 } from "recharts";
 import AnalyticsFilters from "../../components/AnalyticsFilters.jsx";
+import InfoTooltip from "../../components/InfoTooltip.jsx";
 import { fetchAnalyticsRevenue } from "../../api/analyticsApi";
 import { formatBucketLabel, formatCents, formatNumber } from "../../utils/analyticsFormat";
 
@@ -87,9 +88,15 @@ export default function AnalyticsRevenue() {
 
       <div className="grid-2">
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Deposits vs Withdrawals</h3>
+            <InfoTooltip
+              title="Deposits vs Withdrawals"
+              content="Liquidity pressure gauge. Watch for withdrawals overtaking deposits in your selected window."
+            />
           </div>
+        </div>
           {cashflowSeries.length ? (
             <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -132,9 +139,15 @@ export default function AnalyticsRevenue() {
         </div>
 
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Handle vs Payout</h3>
+            <InfoTooltip
+              title="Handle vs Payout"
+              content="Handle is total bet volume; payout is total wins. The gap drives NGR; ratio spikes can signal broken math or bonus abuse."
+            />
           </div>
+        </div>
           {handleSeries.length ? (
             <div style={{ width: "100%", height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -179,7 +192,13 @@ export default function AnalyticsRevenue() {
 
       <div className="panel">
         <div className="panel-header">
-          <h3 className="panel-title">NGR by Game</h3>
+          <div className="panel-title-row">
+            <h3 className="panel-title">NGR by Game</h3>
+            <InfoTooltip
+              title="NGR by Game"
+              content="Game-level profitability. Use this to decide which titles to promote, throttle, or rotate out."
+            />
+          </div>
         </div>
         {topGames.length ? (
           <div className="stack">

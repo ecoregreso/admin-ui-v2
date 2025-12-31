@@ -13,6 +13,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import AnalyticsFilters from "../../components/AnalyticsFilters.jsx";
+import InfoTooltip from "../../components/InfoTooltip.jsx";
 import { fetchAnalyticsLtv } from "../../api/analyticsApi";
 import { formatNumber, formatPercent } from "../../utils/analyticsFormat";
 
@@ -87,9 +88,15 @@ export default function AnalyticsLtv() {
 
       <div className="grid-2">
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Player LTV Segmentation</h3>
+            <InfoTooltip
+              title="LTV Segmentation"
+              content="Operator LTV bands based on bets minus wins. Shows how value concentrates across player bands."
+            />
           </div>
+        </div>
           {segmentData.length ? (
             <div style={{ width: "100%", height: 260 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -110,9 +117,15 @@ export default function AnalyticsLtv() {
         </div>
 
         <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
+          <div className="panel-title-row">
             <h3 className="panel-title">Whale Dependency</h3>
+            <InfoTooltip
+              title="Whale Dependency"
+              content="Share of NGR contributed by top 1%, 5%, and 10% of players. High dependency increases revenue risk."
+            />
           </div>
+        </div>
           {whaleRows.length ? (
             <div style={{ width: "100%", height: 260 }}>
               <ResponsiveContainer width="100%" height="100%">
