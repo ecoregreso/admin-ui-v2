@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { runAnalyticsAudit } from "../../api/analyticsApi";
 import AnalyticsFilters from "../../components/AnalyticsFilters.jsx";
 
@@ -25,16 +25,27 @@ export default function AnalyticsAudit() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [findings, setFindings] = useState([]);
+  const [rangeMeta, setRangeMeta] = useState(null);
+  const [warnings, setWarnings] = useState([]);
 
   async function runAudit() {
     setLoading(true);
     setError("");
     try {
       const res = await runAnalyticsAudit(filters);
-      if (!res.ok) {
+      const ok = res.ok !== false;
+      const nextFindings = res.findings || res.data || [];
+      if (!ok && !nextFindings.length) {
         setError(res.error || "Failed to run audit");
       } else {
-        setFindings(res.findings || []);
+        setFindings(nextFindings);
+        setRangeMeta(res.range || {
+          from: filters.from,
+          to: filters.to,
+          bucket: filters.bucket,
+          timezone: filters.timezone,
+        });
+        setWarnings(res.warnings || res.notices || []);
       }
     } catch (err) {
       setError(err.message || "Failed to run audit");
@@ -42,6 +53,11 @@ export default function AnalyticsAudit() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    runAudit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function exportJson() {
     const blob = new Blob([JSON.stringify(findings, null, 2)], { type: "application/json" });
@@ -57,6 +73,11 @@ export default function AnalyticsAudit() {
     <div className="page">
       <AnalyticsFilters filters={filters} onChange={setFilters} onApply={runAudit} loading={loading} />
       {error && <div className="alert">{error}</div>}
+      {warnings.map((msg, idx) => (
+        <div key={`warn-${idx}`} className="alert">
+          {msg}
+        </div>
+      ))}
 
       <div className="panel">
         <div className="panel-header">
@@ -73,6 +94,26 @@ export default function AnalyticsAudit() {
             </button>
           </div>
         </div>
+        {rangeMeta && (
+          <div className="stat-row" style={{ marginBottom: 12 }}>
+            <div className="stat">
+              <div className="stat-label">From</div>
+              <div className="stat-value">{rangeMeta.from?.slice(0, 10)}</div>
+            </div>
+            <div className="stat">
+              <div className="stat-label">To</div>
+              <div className="stat-value">{rangeMeta.to?.slice(0, 10)}</div>
+            </div>
+            <div className="stat">
+              <div className="stat-label">Bucket</div>
+              <div className="stat-value">{rangeMeta.bucket}</div>
+            </div>
+            <div className="stat">
+              <div className="stat-label">Timezone</div>
+              <div className="stat-value">{rangeMeta.timezone}</div>
+            </div>
+          </div>
+        )}
         {findings.length ? (
           <div className="stack">
             {findings.map((finding, index) => (

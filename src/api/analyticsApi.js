@@ -1,5 +1,19 @@
 import api from "./client";
 
+function normalizeRangeParams(params = {}) {
+  const out = { ...params };
+  const normalizeDate = (value) => {
+    if (!value) return value;
+    if (value instanceof Date) return value.toISOString().slice(0, 10);
+    return String(value);
+  };
+  if (out.from) out.from = normalizeDate(out.from);
+  if (out.to) out.to = normalizeDate(out.to);
+  if (out.start) out.start = normalizeDate(out.start);
+  if (out.end) out.end = normalizeDate(out.end);
+  return out;
+}
+
 export async function fetchAnalyticsOverview(params) {
   const res = await api.get("/api/v1/admin/analytics/overview", { params });
   return res.data;
@@ -41,6 +55,8 @@ export async function fetchAnalyticsAttribution(params) {
 }
 
 export async function runAnalyticsAudit(params) {
-  const res = await api.get("/api/v1/admin/audit/run", { params });
+  const res = await api.get("/api/v1/admin/audit/run", {
+    params: normalizeRangeParams(params),
+  });
   return res.data;
 }

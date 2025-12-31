@@ -39,11 +39,14 @@ export default function AuditLog() {
     setLoading(true);
     setError("");
     try {
-      const data = await listAuditEvents({ limit });
-      if (data.ok) {
-        setEvents(data.events || []);
-      } else {
+      const data = await listAuditEvents({ limit: Number(limit) || 120 });
+      const ok = data.ok !== false;
+      const nextEvents = data.events || [];
+      if (!ok && !nextEvents.length) {
         setError(data.error || "Failed to load audit log");
+        setEvents([]);
+      } else {
+        setEvents(nextEvents);
       }
     } catch (err) {
       console.error("[AuditLog] load error:", err);
@@ -68,10 +71,13 @@ export default function AuditLog() {
           </div>
           <div className="panel-actions">
             <input
+              type="number"
               value={limit}
               onChange={(e) => setLimit(e.target.value)}
               className="input"
               style={{ width: 100 }}
+              min={1}
+              max={500}
             />
             <button className="btn btn-primary" onClick={load} disabled={loading}>
               {loading ? "Loading..." : "Load"}
