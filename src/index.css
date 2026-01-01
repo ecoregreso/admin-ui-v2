@@ -433,7 +433,7 @@ textarea {
   top: 115%;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 30;
+  z-index: 999;
   background: var(--bg-panel-strong);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
