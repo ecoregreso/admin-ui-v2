@@ -19,6 +19,7 @@ import {
   PieChart,
   Pie,
 } from "recharts";
+import InfoTooltip from "../components/InfoTooltip.jsx";
 import {
   fetchBehaviorReport,
   fetchDailyReport,
@@ -699,7 +700,13 @@ export default function ReportsDashboard() {
           <div className="grid-2">
             <div className="panel">
               <div className="panel-header">
-                <h3 className="panel-title">Summary (Bar)</h3>
+                <div className="panel-title-row">
+                  <h3 className="panel-title">Summary (Bar)</h3>
+                  <InfoTooltip
+                    title="Summary Bar"
+                    content="Stacked bar view of key revenue and engagement metrics for the selected range."
+                  />
+                </div>
               </div>
               <div style={{ width: "100%", height: 260 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -718,7 +725,13 @@ export default function ReportsDashboard() {
             </div>
             <div className="panel">
               <div className="panel-header">
-                <h3 className="panel-title">Summary (Line)</h3>
+                <div className="panel-title-row">
+                  <h3 className="panel-title">Summary (Line)</h3>
+                  <InfoTooltip
+                    title="Summary Line"
+                    content="Time-series of the same metrics to spot trend direction and inflection points."
+                  />
+                </div>
               </div>
               <div style={{ width: "100%", height: 260 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -741,7 +754,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Net Gaming Revenue (NGR)</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Net Gaming Revenue (NGR)</h3>
+                    <InfoTooltip
+                      title="NGR"
+                      content="Bets minus wins (and bonuses if present) over time. Core health metric operators watch first."
+                    />
+                  </div>
                   <p className="panel-subtitle">Gross bets - wins - bonuses.</p>
                 </div>
               </div>
@@ -771,7 +790,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Handle vs Payout Ratio</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Handle vs Payout Ratio</h3>
+                    <InfoTooltip
+                      title="Handle vs Payout"
+                      content="Total bet volume versus payouts, with ratio to catch payout spikes or math issues."
+                    />
+                  </div>
                   <p className="panel-subtitle">Handle vs payout trend across top games.</p>
                 </div>
               </div>
@@ -816,7 +841,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Deposits vs Withdrawals</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Deposits vs Withdrawals</h3>
+                    <InfoTooltip
+                      title="Deposits vs Withdrawals"
+                      content="Liquidity pressure gauge: watch when withdrawals outpace deposits for the same window."
+                    />
+                  </div>
                   <p className="panel-subtitle">
                     Credits in vs debits out over time.
                   </p>
@@ -867,7 +898,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Revenue by Game / Provider</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Revenue by Game / Provider</h3>
+                    <InfoTooltip
+                      title="Revenue by Game / Provider"
+                      content="Game/provider breakdown of bets, wins, and NGR. Use it to rank promos and rotations."
+                    />
+                  </div>
                   <p className="panel-subtitle">Top contributors in this range.</p>
                 </div>
               </div>
@@ -900,7 +937,13 @@ export default function ReportsDashboard() {
           <div className="panel">
             <div className="panel-header">
               <div>
+              <div className="panel-title-row">
                 <h3 className="panel-title">Player Behavior</h3>
+                <InfoTooltip
+                  title="Player Behavior"
+                  content="Engagement and retention signals: active users, cohorts, session lengths, and bet sizes."
+                />
+              </div>
                 <p className="panel-subtitle">Where money is made: activity, retention, and bet sizing.</p>
               </div>
             </div>
@@ -910,7 +953,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">DAU / WAU / MAU</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">DAU / WAU / MAU</h3>
+                    <InfoTooltip
+                      title="Active Users"
+                      content="Daily, weekly, and monthly actives based on bet/spin activity in each bucket."
+                    />
+                  </div>
                   <p className="panel-subtitle">
                     Daily, weekly, and monthly active players.
                   </p>
@@ -970,7 +1019,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Retention Curve (D1 / D7 / D30)</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Retention Curve (D1 / D7 / D30)</h3>
+                    <InfoTooltip
+                      title="Retention Curve"
+                      content="Cohort return rates on day 1, 7, and 30 after first activity. Shows stickiness vs churn."
+                    />
+                  </div>
                   <p className="panel-subtitle">
                     Cohorts by signup day with day 1/7/30 return rates.
                   </p>
@@ -1039,7 +1094,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Session Length Distribution</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Session Length Distribution</h3>
+                    <InfoTooltip
+                      title="Session Lengths"
+                      content="Histogram of session durations to spot deep engagement and potential risk flags."
+                    />
+                  </div>
                   <p className="panel-subtitle">
                     Duration histogram for player sessions.
                   </p>
@@ -1069,7 +1130,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Bet Size Distribution</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Bet Size Distribution</h3>
+                    <InfoTooltip
+                      title="Bet Sizes"
+                      content="Box view of bet sizes by bucket; reveals whales, minnows, and sudden stake jumps."
+                    />
+                  </div>
                   <p className="panel-subtitle">
                     Game bet amounts by bucket.
                   </p>
@@ -1100,7 +1167,13 @@ export default function ReportsDashboard() {
           <div className="panel">
             <div className="panel-header">
               <div>
+              <div className="panel-title-row">
                 <h3 className="panel-title">Risk, Fraud & Abuse</h3>
+                <InfoTooltip
+                  title="Risk, Fraud & Abuse"
+                  content="Operator-side anomaly monitors: RTP outliers, bonus abuse, geo spikes, and account velocity."
+                />
+              </div>
                 <p className="panel-subtitle">
                   Signals that prevent catastrophic loss before it escalates.
                 </p>
@@ -1112,7 +1185,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Win Rate Outliers</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Win Rate Outliers</h3>
+                    <InfoTooltip
+                      title="Win Rate Outliers"
+                      content="Players with RTP deviations from expected after enough spins; top z-score style anomalies."
+                    />
+                  </div>
                   <p className="panel-subtitle">
                     Player RTP deviation from baseline.
                     {risk?.winRateOutliers && (
@@ -1158,7 +1237,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Bonus Abuse Indicators</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Bonus Abuse Indicators</h3>
+                    <InfoTooltip
+                      title="Bonus Abuse"
+                      content="Legit vs flagged bonus patterns if bonus system is enabled; empty when not configured."
+                    />
+                  </div>
                   <p className="panel-subtitle">
                     Legit vs flagged accounts by bonus behavior.
                     {risk?.bonusAbuse?.criteria && (
@@ -1243,7 +1328,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Geographic Anomalies</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Geographic Anomalies</h3>
+                    <InfoTooltip
+                      title="Geographic Anomalies"
+                      content="Region mix and anomalies versus baseline; used to catch VPN farms or odd traffic shifts."
+                    />
+                  </div>
                   <p className="panel-subtitle">
                     Session distribution by country.
                     {risk?.geography && (
@@ -1317,7 +1408,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Account Velocity</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Account Velocity</h3>
+                    <InfoTooltip
+                      title="Account Velocity"
+                      content="Accounts created per bucket. Spikes without campaigns indicate scripted signups."
+                    />
+                  </div>
                   <p className="panel-subtitle">
                     Accounts created per day and hour.
                     {peakDaily && peakHourly && (
@@ -1383,7 +1480,13 @@ export default function ReportsDashboard() {
           <div className="panel">
             <div className="panel-header">
               <div>
+              <div className="panel-title-row">
                 <h3 className="panel-title">Operational Intelligence</h3>
+                <InfoTooltip
+                  title="Operational Intelligence"
+                  content="Ops stability: API errors, failed bets, cashier performance, and resolution times."
+                />
+              </div>
                 <p className="panel-subtitle">
                   The "nothing broke today" dashboard for day-to-day stability.
                 </p>
@@ -1395,7 +1498,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">System Errors / Failed Bets</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">System Errors / Failed Bets</h3>
+                    <InfoTooltip
+                      title="System Errors"
+                      content="Error counts and failed bets per bucket. Spikes mean outages or integration problems."
+                    />
+                  </div>
                   <p className="panel-subtitle">
                     Pending rounds vs stale bets (pending &gt; {opsStaleMinutes}m).
                   </p>
@@ -1476,7 +1585,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Cashier Performance</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Cashier Performance</h3>
+                    <InfoTooltip
+                      title="Cashier Performance"
+                      content="Vouchers issued, redeemed, and expired per bucket; tracks cash handling efficiency."
+                    />
+                  </div>
                   <p className="panel-subtitle">
                     Vouchers issued, redeemed, and expired.
                     {cashierTotals && (
@@ -1640,7 +1755,13 @@ export default function ReportsDashboard() {
           <div className="panel">
             <div className="panel-header">
               <div>
+              <div className="panel-title-row">
                 <h3 className="panel-title">Game Performance</h3>
+                <InfoTooltip
+                  title="Game Performance"
+                  content="Math and volume views: actual vs expected RTP, volatility heatmap, and spin volume."
+                />
+              </div>
                 <p className="panel-subtitle">
                   Math meets psychology: RTP variance, volatility, and spin volume.
                 </p>
@@ -1652,7 +1773,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">RTP by Game (Actual vs Expected)</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">RTP by Game (Actual vs Expected)</h3>
+                    <InfoTooltip
+                      title="RTP by Game"
+                      content="Actual RTP compared to expected per game; large gaps may mean variance or defects."
+                    />
+                  </div>
                   <p className="panel-subtitle">Variance is variance until it sticks.</p>
                 </div>
               </div>
@@ -1721,7 +1848,13 @@ export default function ReportsDashboard() {
             <div className="panel">
               <div className="panel-header">
                 <div>
-                  <h3 className="panel-title">Volatility Heatmap</h3>
+                  <div className="panel-title-row">
+                    <h3 className="panel-title">Volatility Heatmap</h3>
+                    <InfoTooltip
+                      title="Volatility Heatmap"
+                      content="Variance proxy by game and time bucket. Bright cells indicate heavier swings."
+                    />
+                  </div>
                   <p className="panel-subtitle">
                     Net variance by game and day.
                   </p>
@@ -1813,7 +1946,13 @@ export default function ReportsDashboard() {
           <div className="panel">
             <div className="panel-header">
               <div>
+              <div className="panel-title-row">
                 <h3 className="panel-title">Spin Volume Over Time</h3>
+                <InfoTooltip
+                  title="Spin Volume"
+                  content="Spins per bucket by game. Quickly spot dead content and promo-driven surges."
+                />
+              </div>
                 <p className="panel-subtitle">
                   Dead games show up immediately.
                   {peakSpinVolume && (
