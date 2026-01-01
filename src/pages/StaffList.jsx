@@ -38,6 +38,7 @@ const ROLE_DEFAULTS = {
     "betlog:read",
   ],
   agent: ["player:read", "player:write", "finance:read", "voucher:read"],
+  distributor: ["player:read", "finance:read"],
   cashier: ["player:read", "finance:write", "finance:read", "voucher:read", "voucher:write"],
 };
 
@@ -316,6 +317,7 @@ export default function StaffList() {
                     >
                       <option value="operator">operator</option>
                       <option value="agent">agent</option>
+                      <option value="distributor">distributor</option>
                       <option value="cashier">cashier</option>
                     </select>
                   </div>
@@ -433,6 +435,7 @@ export default function StaffList() {
                 >
                   <option value="operator">operator</option>
                   <option value="agent">agent</option>
+                  <option value="distributor">distributor</option>
                   <option value="cashier">cashier</option>
                 </select>
               </div>

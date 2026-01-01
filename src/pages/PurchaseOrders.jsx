@@ -59,7 +59,7 @@ export default function PurchaseOrders() {
     [staff]
   );
   const canPlaceOrder = useMemo(
-    () => staff?.role === "agent" || Boolean(staff?.distributorId),
+    () => staff?.role === "agent" || staff?.role === "distributor",
     [staff]
   );
 

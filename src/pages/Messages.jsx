@@ -150,7 +150,7 @@ export default function Messages() {
 
   const hasKeys = useMemo(() => !!privateKey && !!publicKey, [privateKey, publicKey]);
   const canPush = useMemo(
-    () => ["owner", "agent", "operator"].includes(staff?.role),
+    () => ["owner", "agent", "operator", "distributor"].includes(staff?.role),
     [staff?.role]
   );
 
