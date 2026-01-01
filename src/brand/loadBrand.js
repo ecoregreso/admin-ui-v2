@@ -1,61 +1,50 @@
-import DefaultBrand from "./defaultBrand.js";
-import { presets } from "./presets.js";
+import api from "../api/client";
+import { DefaultBrand } from "./defaultBrand";
+import { BrandPresets } from "./presets";
 
-const mergeSection = (base, override) => ({
-  ...base,
-  ...(override || {})
-});
-
-const mergeBrand = (base, override) => {
-  if (!override) {
-    return base;
-  }
-
-  return {
-    ...base,
-    ...override,
-    colors: mergeSection(base.colors, override.colors),
-    fonts: mergeSection(base.fonts, override.fonts),
-    radius: mergeSection(base.radius, override.radius),
-    glow: mergeSection(base.glow, override.glow)
-  };
-};
-
-const getBrandFromUrl = () => {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const key = params.get("brand");
-    if (key && presets[key]) {
-      return presets[key];
+function deepMerge(base, override) {
+  if (!override) return base;
+  const out = Array.isArray(base) ? [...base] : { ...base };
+  for (const [k, v] of Object.entries(override)) {
+    if (v && typeof v === "object" && !Array.isArray(v) && base?.[k] && typeof base[k] === "object") {
+      out[k] = deepMerge(base[k], v);
+    } else {
+      out[k] = v;
     }
-  } catch {
-    return null;
   }
+  return out;
+}
 
-  return null;
-};
-
-const fetchBrand = async (url) => {
+async function tryGet(path) {
   try {
-    const response = await fetch(url, { credentials: "include" });
-    if (!response.ok) {
-      return null;
-    }
-    const data = await response.json();
+    const res = await api.get(path, { timeout: 5000 });
+    const data = res?.data ?? null;
     return data && data.brand ? data.brand : data;
   } catch {
     return null;
   }
-};
+}
 
-const loadBrand = async () => {
-  const preset = getBrandFromUrl();
-  if (preset) {
-    return mergeBrand(DefaultBrand, preset);
+// Loads brand config.
+// Priority:
+// 1) ?brand=presetName (demo mode)
+// 2) backend endpoint (/public/brand OR /api/v1/public/brand)
+// 3) DefaultBrand fallback
+export async function loadBrand() {
+  let preset = null;
+  try {
+    const url = new URL(window.location.href);
+    preset = url.searchParams.get("brand");
+  } catch {
+    preset = null;
   }
+  if (preset && BrandPresets[preset]) return BrandPresets[preset];
 
-  const remote = (await fetchBrand("/public/brand")) || (await fetchBrand("/api/v1/public/brand"));
-  return mergeBrand(DefaultBrand, remote || {});
-};
+  const fromPublic = await tryGet("/public/brand");
+  if (fromPublic) return deepMerge(DefaultBrand, fromPublic);
 
-export default loadBrand;
+  const fromV1 = await tryGet("/api/v1/public/brand");
+  if (fromV1) return deepMerge(DefaultBrand, fromV1);
+
+  return DefaultBrand;
+}

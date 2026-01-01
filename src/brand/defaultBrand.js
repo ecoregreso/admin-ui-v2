@@ -1,5 +1,7 @@
-const DefaultBrand = {
-  name: "default",
+export const DefaultBrand = {
+  name: "PlayTime USA",
+  shortName: "PlayTime",
+  logoUrl: "",
   colors: {
     bg: "#050609",
     bgObsidian: "#0b0f15",
@@ -21,23 +23,24 @@ const DefaultBrand = {
     steel1: "#e8edf4",
     steel2: "#c8d0da",
     steel3: "#9aa3ad",
-    steel4: "#687280"
+    steel4: "#687280",
   },
   fonts: {
-    base: '"Space Grotesk", "Chakra Petch", sans-serif',
-    display: '"Chakra Petch", "Space Grotesk", sans-serif'
+    base: "\"Space Grotesk\", \"Chakra Petch\", sans-serif",
+    display: "\"Chakra Petch\", \"Space Grotesk\", sans-serif",
   },
   radius: {
     lg: "16px",
     xl: "20px",
-    pill: "999px"
+    pill: "999px",
   },
   glow: {
     accent: "0 0 22px rgba(39, 217, 255, 0.35)",
     danger: "0 0 22px rgba(255, 48, 79, 0.35)",
     soft: "0 14px 30px rgba(0, 0, 0, 0.45)",
-    strong: "0 20px 50px rgba(0, 0, 0, 0.65)"
-  }
+    strong: "0 20px 50px rgba(0, 0, 0, 0.65)",
+  },
+  assets: {
+    loginBgUrl: "",
+  },
 };
-
-export default DefaultBrand;

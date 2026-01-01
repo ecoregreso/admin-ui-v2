@@ -3,30 +3,24 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
 import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
-import loadBrand from "./brand/loadBrand.js";
-import applyBrandToCssVars from "./brand/applyBrand.js";
+import { loadBrand } from "./brand/loadBrand";
+import { applyBrandToCssVars } from "./brand/applyBrand";
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
+async function bootstrap() {
+  try {
+    const brand = await loadBrand();
+    applyBrandToCssVars(brand);
+  } catch {
+    // Keep defaults if brand load fails.
+  }
 
-const renderApp = () => {
-  root.render(
+  ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
       <StaffAuthProvider>
         <App />
       </StaffAuthProvider>
     </React.StrictMode>
   );
-};
-
-const bootstrap = async () => {
-  try {
-    const brand = await loadBrand();
-    applyBrandToCssVars(brand);
-  } catch {
-    // Fall back to CSS defaults.
-  }
-
-  renderApp();
-};
+}
 
 bootstrap();
