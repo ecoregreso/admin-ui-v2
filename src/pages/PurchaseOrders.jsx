@@ -58,6 +58,10 @@ export default function PurchaseOrders() {
     () => (staff?.permissions || []).includes("finance:write"),
     [staff]
   );
+  const canPlaceOrder = useMemo(
+    () => staff?.role === "agent" || Boolean(staff?.distributorId),
+    [staff]
+  );
 
   async function load() {
     setLoading(true);
@@ -95,6 +99,11 @@ export default function PurchaseOrders() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!canPlaceOrder) {
+      setError("Only agents or distributors can place funcoin orders.");
+      return;
+    }
 
     const amountNum = Number(funAmount);
     if (!Number.isFinite(amountNum) || amountNum <= 0) {
@@ -266,6 +275,12 @@ export default function PurchaseOrders() {
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
+      {!canPlaceOrder && (
+        <div className="alert alert-info">
+          Only agents or distributors can place funcoin orders. You can still view existing requests.
+        </div>
+      )}
+
       <form className="form-grid" onSubmit={handleSubmit}>
         <div className="field">
           <label>FUN Amount</label>
@@ -286,6 +301,7 @@ export default function PurchaseOrders() {
             className="input"
             placeholder="e.g., 1000"
             required
+            disabled={!canPlaceOrder || loading}
           />
         </div>
         <div className="field">
@@ -306,8 +322,14 @@ export default function PurchaseOrders() {
               }}
               className="input"
               placeholder="e.g., 60000 (FUN per BTC)"
+              disabled={!canPlaceOrder || loading}
             />
-            <button type="button" className="btn btn-secondary" onClick={fetchRate}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={fetchRate}
+              disabled={!canPlaceOrder || loading}
+            >
               Fetch Rate
             </button>
           </div>
@@ -323,6 +345,7 @@ export default function PurchaseOrders() {
             className="input"
             placeholder="Auto-calculated from FUN and rate"
             required
+            disabled={!canPlaceOrder || loading}
           />
         </div>
         <div className="field span-2">
@@ -333,10 +356,11 @@ export default function PurchaseOrders() {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Any context for this request (optional)"
+            disabled={!canPlaceOrder || loading}
           />
         </div>
         <div className="field span-2">
-          <button type="submit" className="btn" disabled={loading}>
+          <button type="submit" className="btn" disabled={!canPlaceOrder || loading}>
             {loading ? "Submitting..." : "Submit Order"}
           </button>
         </div>

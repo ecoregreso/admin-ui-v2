@@ -11,6 +11,8 @@ import TransactionsList from "./pages/TransactionsList.jsx";
 import SessionsList from "./pages/SessionsList.jsx";
 import AuditLog from "./pages/AuditLog.jsx";
 import SafetyDashboard from "./pages/SafetyDashboard.jsx";
+import PurchaseOrders from "./pages/PurchaseOrders.jsx";
+import Messages from "./pages/Messages.jsx";
 import AnalyticsOverview from "./pages/analytics/AnalyticsOverview.jsx";
 import AnalyticsRevenue from "./pages/analytics/AnalyticsRevenue.jsx";
 import AnalyticsPlayers from "./pages/analytics/AnalyticsPlayers.jsx";
@@ -202,6 +204,22 @@ export default function App() {
             element={
               <RequirePermission permission={["finance:write", "finance:read"]}>
                 <FinanceQueue />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="purchase-orders"
+            element={
+              <RequirePermission permission="finance:read">
+                <PurchaseOrders />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="messages"
+            element={
+              <RequirePermission permission="player:read">
+                <Messages />
               </RequirePermission>
             }
           />

@@ -39,6 +39,7 @@ export default function AdminLayout() {
         { to: "/players", label: "Players", perms: ["player:read"] },
         { to: "/vouchers", label: "Vouchers", perms: ["voucher:read"] },
         { to: "/reports", label: "Reports", perms: ["finance:read"] },
+        { to: "/messages", label: "Messages", perms: ["player:read"] },
       ],
     },
     {
@@ -63,6 +64,7 @@ export default function AdminLayout() {
       items: [
         { to: "/transactions", label: "Transactions", perms: ["finance:read"] },
         { to: "/finance-queue", label: "Finance Queue", perms: ["finance:write", "finance:read"] },
+        { to: "/purchase-orders", label: "Funcoin Orders", perms: ["finance:read"] },
       ],
     },
     {
