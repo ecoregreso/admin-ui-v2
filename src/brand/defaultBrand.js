@@ -1,0 +1,43 @@
+const DefaultBrand = {
+  name: "default",
+  colors: {
+    bg: "#050609",
+    bgObsidian: "#0b0f15",
+    bgMetal: "#121823",
+    panel: "rgba(10, 14, 20, 0.82)",
+    panelStrong: "rgba(8, 10, 14, 0.92)",
+    panelGlass: "rgba(14, 18, 26, 0.7)",
+    text: "#f4f6fa",
+    textMuted: "rgba(202, 210, 224, 0.68)",
+    textFaint: "rgba(202, 210, 224, 0.45)",
+    accent: "#27d9ff",
+    accentSoft: "rgba(39, 217, 255, 0.35)",
+    danger: "#ff304f",
+    dangerSoft: "rgba(255, 48, 79, 0.35)",
+    purple: "#4b5bff",
+    border: "rgba(255, 255, 255, 0.08)",
+    borderStrong: "rgba(255, 255, 255, 0.16)",
+    borderRail: "rgba(39, 217, 255, 0.25)",
+    steel1: "#e8edf4",
+    steel2: "#c8d0da",
+    steel3: "#9aa3ad",
+    steel4: "#687280"
+  },
+  fonts: {
+    base: '"Space Grotesk", "Chakra Petch", sans-serif',
+    display: '"Chakra Petch", "Space Grotesk", sans-serif'
+  },
+  radius: {
+    lg: "16px",
+    xl: "20px",
+    pill: "999px"
+  },
+  glow: {
+    accent: "0 0 22px rgba(39, 217, 255, 0.35)",
+    danger: "0 0 22px rgba(255, 48, 79, 0.35)",
+    soft: "0 14px 30px rgba(0, 0, 0, 0.45)",
+    strong: "0 20px 50px rgba(0, 0, 0, 0.65)"
+  }
+};
+
+export default DefaultBrand;
