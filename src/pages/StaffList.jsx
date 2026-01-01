@@ -26,18 +26,6 @@ const PERMISSION_GROUPS = [
 ];
 
 const ROLE_DEFAULTS = {
-  owner: [
-    "tenant:manage",
-    "staff:manage",
-    "player:read",
-    "player:write",
-    "finance:read",
-    "finance:write",
-    "voucher:read",
-    "voucher:write",
-    "betlog:read",
-    "system:config",
-  ],
   operator: [
     "tenant:manage",
     "staff:manage",
@@ -326,7 +314,6 @@ export default function StaffList() {
                       onChange={(e) => handleChangeRole(selectedStaff, e.target.value)}
                       className="select"
                     >
-                      <option value="owner">owner</option>
                       <option value="operator">operator</option>
                       <option value="agent">agent</option>
                       <option value="cashier">cashier</option>
@@ -444,7 +431,6 @@ export default function StaffList() {
                   onChange={(e) => setNewRole(e.target.value)}
                   className="select"
                 >
-                  <option value="owner">owner</option>
                   <option value="operator">operator</option>
                   <option value="agent">agent</option>
                   <option value="cashier">cashier</option>

@@ -14,16 +14,10 @@ export default function VoucherPanel({ staff }) {
   const token = localStorage.getItem("auth_token");
 
   // Treat 'admin' as top-level staff
-  const canViewList = ["admin", "agent", "operator", "owner"].includes(
+  const canViewList = ["admin", "agent", "operator"].includes(staff.role);
+  const canCreateRedeem = ["admin", "cashier", "agent", "operator"].includes(
     staff.role
   );
-  const canCreateRedeem = [
-    "admin",
-    "cashier",
-    "agent",
-    "operator",
-    "owner",
-  ].includes(staff.role);
 
   async function fetchVouchers() {
     if (!canViewList) return;

@@ -10,8 +10,6 @@ import FinanceQueue from "./pages/FinanceQueue.jsx";
 import TransactionsList from "./pages/TransactionsList.jsx";
 import SessionsList from "./pages/SessionsList.jsx";
 import AuditLog from "./pages/AuditLog.jsx";
-import PurchaseOrders from "./pages/PurchaseOrders.jsx";
-import Messages from "./pages/Messages.jsx";
 import SafetyDashboard from "./pages/SafetyDashboard.jsx";
 import AnalyticsOverview from "./pages/analytics/AnalyticsOverview.jsx";
 import AnalyticsRevenue from "./pages/analytics/AnalyticsRevenue.jsx";
@@ -191,20 +189,11 @@ export default function App() {
               </RequirePermission>
             }
           />
-          <Route path="messages" element={<Messages />} />
           <Route
             path="transactions"
             element={
               <RequirePermission permission="finance:read">
                 <TransactionsList />
-              </RequirePermission>
-            }
-          />
-          <Route
-            path="purchase-orders"
-            element={
-              <RequirePermission permission="finance:read">
-                <PurchaseOrders />
               </RequirePermission>
             }
           />
