@@ -369,7 +369,7 @@ textarea {
   box-shadow: var(--shadow-soft);
   padding: 18px 20px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .panel::before {
@@ -430,15 +430,16 @@ textarea {
 
 .info-popover {
   position: absolute;
-  top: 110%;
-  right: 0;
+  top: 115%;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 30;
   background: var(--bg-panel-strong);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-strong);
   padding: 12px 14px;
-  width: min(360px, 90vw);
+  width: min(380px, 90vw);
   color: var(--text-primary);
   font-size: 13px;
   line-height: 1.5;
