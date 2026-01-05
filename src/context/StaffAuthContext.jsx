@@ -30,14 +30,14 @@ export function StaffAuthProvider({ children }) {
     }
   }, []);
 
-  async function login({ username, password }) {
+  async function login({ username, password, tenantId = null }) {
     setError("");
 
     try {
-      const res = await api.post("/api/v1/staff/login", {
-        username,
-        password,
-      });
+      const payload = { username, password };
+      if (tenantId) payload.tenantId = tenantId;
+
+      const res = await api.post("/api/v1/staff/login", payload);
 
       const accessToken = res.data?.token || res.data?.tokens?.accessToken;
       const staffPayload = res.data?.staff;
@@ -51,6 +51,8 @@ export function StaffAuthProvider({ children }) {
 
       localStorage.setItem("ptu_staff_token", accessToken);
       localStorage.setItem("ptu_staff_payload", JSON.stringify(staffPayload));
+      if (tenantId) localStorage.setItem("ptu_tenant_id", String(tenantId));
+      else localStorage.removeItem("ptu_tenant_id");
 
       api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
@@ -73,6 +75,7 @@ export function StaffAuthProvider({ children }) {
     setError("");
     localStorage.removeItem("ptu_staff_token");
     localStorage.removeItem("ptu_staff_payload");
+    localStorage.removeItem("ptu_tenant_id");
     delete api.defaults.headers.common.Authorization;
   }
 

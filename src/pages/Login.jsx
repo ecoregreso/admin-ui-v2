@@ -1,15 +1,29 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useStaffAuth } from "../context/StaffAuthContext.jsx";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, error: authError } = useStaffAuth();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [tenantId, setTenantId] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search || "");
+      const fromUrl = (params.get("tenantId") || "").trim();
+      const fromStore = (localStorage.getItem("ptu_tenant_id") || "").trim();
+      setTenantId(fromUrl || fromStore || "");
+    } catch {
+      // ignore
+    }
+  }, [location.search]);
+
 
   const canSubmit = useMemo(
     () => username.trim().length > 0 && password.length > 0 && !submitting,
@@ -21,7 +35,7 @@ const Login = () => {
     if (!canSubmit) return;
 
     setSubmitting(true);
-    const ok = await login({ username: username.trim(), password });
+    const ok = await login({ username: username.trim(), password, tenantId: tenantId.trim() || null });
     setSubmitting(false);
 
     if (ok) navigate("/dashboard");
@@ -83,6 +97,43 @@ const Login = () => {
             >
               <defs>
                 <linearGradient
+                  id="gradient-stroke-tenant"
+                  x1={0}
+                  y1={0}
+                  x2={24}
+                  y2={24}
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stopColor="black" />
+                  <stop offset="100%" stopColor="white" />
+                </linearGradient>
+              </defs>
+              <g stroke="url(#gradient-stroke-tenant)" fill="none" strokeWidth={1}>
+                <path d="M12 2a5 5 0 1 0 0 10a5 5 0 0 0 0-10Z" />
+                <path d="M4 22c0-4.4183 3.5817-8 8-8s8 3.5817 8 8" />
+              </g>
+            </svg>
+
+            <input
+              className="input"
+              type="text"
+              placeholder="Tenant ID (optional)"
+              value={tenantId}
+              onChange={(e) => setTenantId(e.target.value)}
+            />
+          </div>
+
+          <div className="input-container">
+            <svg
+              width={24}
+              height={24}
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <defs>
+                <linearGradient
                   id="gradient-stroke"
                   x1={0}
                   y1={0}
@@ -110,6 +161,10 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
+
+          {tenantId && (
+            <div className="hint">Tenant scope active</div>
+          )}
 
           {authError && <div className="error">{authError}</div>}
 
@@ -173,7 +228,14 @@ const StyledWrapper = styled.div`
       drop-shadow(0 -8px 14px rgba(255, 255, 255, 0.18));
   }
 
-  .form .login-tagline {
+    .hint {
+    margin-top: -0.25rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    color: rgba(202, 210, 224, 0.72);
+  }
+
+.form .login-tagline {
     margin-top: -0.65rem;
     margin-bottom: 0.75rem;
     font-size: 0.78rem;

@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createVoucher, listVouchers } from "../api/vouchersApi";
-import { useStaffAuth } from "../context/StaffAuthContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-const TENANT_STORAGE_KEY = "ptu_tenant_id";
 
 function fmt(n) {
   if (n == null) return "0";
@@ -19,7 +17,6 @@ function fmtDate(s) {
 }
 
 export default function VouchersList() {
-  const { staff } = useStaffAuth();
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,12 +24,10 @@ export default function VouchersList() {
   const [amount, setAmount] = useState("");
   const [bonusAmount, setBonusAmount] = useState("");
   const [currency, setCurrency] = useState("FUN");
-  const [tenantId, setTenantId] = useState(() => localStorage.getItem(TENANT_STORAGE_KEY) || "");
 
   const [created, setCreated] = useState(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const requiresTenant = staff?.role === "owner" && !staff?.tenantId;
 
   async function load() {
     setError("");
@@ -63,29 +58,15 @@ export default function VouchersList() {
     if (!Number.isFinite(a) || a <= 0) return setError("Amount must be > 0.");
     if (!Number.isFinite(b) || b < 0) return setError("Bonus must be >= 0.");
 
-    const resolvedTenantId = requiresTenant ? tenantId.trim() : staff?.tenantId || "";
-    if (requiresTenant && !resolvedTenantId) {
-      return setError("Tenant ID is required for owner-issued vouchers.");
-    }
-
     try {
-      if (resolvedTenantId) {
-        localStorage.setItem(TENANT_STORAGE_KEY, resolvedTenantId);
-      }
-      const data = await createVoucher({
-        amount: a,
-        bonusAmount: b,
-        currency,
-        tenantId: resolvedTenantId || undefined,
-      });
+      const data = await createVoucher({ amount: a, bonusAmount: b, currency });
       setCreated(data);
       setAmount("");
       setBonusAmount("");
       await load();
     } catch (e) {
       console.error(e);
-      const message = e?.response?.data?.error || e?.response?.data?.message;
-      setError(message || "Failed to create voucher.");
+      setError("Failed to create voucher.");
     }
   }
 
@@ -113,19 +94,6 @@ export default function VouchersList() {
         {error && <div className="alert">{error}</div>}
 
         <form className="form-grid" onSubmit={onCreate}>
-          {requiresTenant && (
-            <div className="field">
-              <label>Tenant ID</label>
-              <input
-                type="text"
-                value={tenantId}
-                onChange={(e) => setTenantId(e.target.value)}
-                className="input"
-                placeholder="Tenant UUID"
-                required
-              />
-            </div>
-          )}
           <div className="field">
             <label>Amount</label>
             <input
