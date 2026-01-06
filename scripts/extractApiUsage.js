@@ -58,8 +58,20 @@ async function listFiles(dir) {
 function extractApiPath(raw) {
   if (!raw) return null;
   const value = String(raw).trim();
-  if (!value.includes("/api")) return null;
-  return value;
+  const apiIndex = value.indexOf("/api");
+  if (apiIndex === -1) return null;
+  if (apiIndex > 0 && !value.startsWith("http")) return null;
+  const normalized = apiIndex > 0 ? value.slice(apiIndex) : value;
+  if (!normalized.startsWith("/api")) return null;
+  if (
+    normalized === "/api" ||
+    normalized === "/api/" ||
+    normalized === "/api/v1" ||
+    normalized === "/api/v1/"
+  ) {
+    return null;
+  }
+  return normalized;
 }
 
 function addEntry(out, seen, entry) {

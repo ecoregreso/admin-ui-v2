@@ -1,159 +1,15 @@
 [
   {
     "method": "ANY",
-    "path": ".../api/v1",
-    "source": "src/api/client.js:10",
+    "path": "/api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+    "source": "src/pages/PurchaseOrders.jsx:142",
     "notes": "string literal"
   },
   {
-    "method": "ANY",
-    "path": "../../api/analyticsApi",
-    "source": "src/pages/analytics/AnalyticsAudit.jsx:2",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../../api/analyticsApi",
-    "source": "src/pages/analytics/AnalyticsFunnel.jsx:13",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../../api/analyticsApi",
-    "source": "src/pages/analytics/AnalyticsGames.jsx:16",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../../api/analyticsApi",
-    "source": "src/pages/analytics/AnalyticsLtv.jsx:17",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../../api/analyticsApi",
-    "source": "src/pages/analytics/AnalyticsOps.jsx:16",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../../api/analyticsApi",
-    "source": "src/pages/analytics/AnalyticsOverview.jsx:19",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../../api/analyticsApi",
-    "source": "src/pages/analytics/AnalyticsPlayers.jsx:22",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../../api/analyticsApi",
-    "source": "src/pages/analytics/AnalyticsRevenue.jsx:18",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/auditApi",
-    "source": "src/pages/AuditLog.jsx:2",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/client",
-    "source": "src/brand/loadBrand.js:1",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/client",
-    "source": "src/context/StaffAuthContext.jsx:4",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/client",
-    "source": "src/pages/FinanceQueue.jsx:2",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/client",
-    "source": "src/pages/Maintenance.jsx:2",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/dashboardApi",
-    "source": "src/pages/Dashboard.jsx:11",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/messagesApi",
-    "source": "src/pages/Messages.jsx:12",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/playersApi",
-    "source": "src/pages/PlayersList.jsx:9",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/purchaseOrdersApi.js",
-    "source": "src/pages/PurchaseOrders.jsx:14",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/pushApi",
-    "source": "src/pages/Messages.jsx:19",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/reportsApi",
-    "source": "src/pages/ReportsDashboard.jsx:30",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/safetyApi",
-    "source": "src/pages/SafetyDashboard.jsx:18",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/sessionsApi",
-    "source": "src/pages/SessionsList.jsx:2",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/staffAdminApi",
-    "source": "src/pages/StaffList.jsx:7",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/transactionsApi",
-    "source": "src/pages/TransactionsList.jsx:2",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "../api/vouchersApi",
-    "source": "src/pages/VouchersList.jsx:2",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "/api/v1",
-    "source": "src/api/client.js:4",
-    "notes": "string literal"
+    "method": "GET",
+    "path": "/api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+    "source": "src/pages/PurchaseOrders.jsx:141",
+    "notes": "fetch (default GET)"
   },
   {
     "method": "ANY",
@@ -958,23 +814,5 @@
     "path": "/api/v1/withdrawals/dev/mark-sent",
     "source": "src/pages/FinanceQueue.jsx:54",
     "notes": "axios call"
-  },
-  {
-    "method": "ANY",
-    "path": "http://localhost:3000/api/v1",
-    "source": "src/layout/components/PlayerInspector.jsx:5",
-    "notes": "string literal"
-  },
-  {
-    "method": "ANY",
-    "path": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
-    "source": "src/pages/PurchaseOrders.jsx:142",
-    "notes": "string literal"
-  },
-  {
-    "method": "GET",
-    "path": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
-    "source": "src/pages/PurchaseOrders.jsx:141",
-    "notes": "fetch (default GET)"
   }
 ]

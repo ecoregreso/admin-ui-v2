@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "api:extract": "node scripts/extractApiUsage.js",
+    "api:openapi": "node scripts/generateOpenApiFromUsage.js",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
