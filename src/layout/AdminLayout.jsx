@@ -73,6 +73,7 @@ export default function AdminLayout() {
         { to: "/pam", label: "PAM / Staff", perms: ["staff:manage"] },
         { to: "/sessions", label: "Sessions", perms: ["staff:manage", "player:read"] },
         { to: "/audit", label: "Audit Log", perms: ["staff:manage"] },
+        { to: "/maintenance", label: "Maintenance", perms: ["tenant:manage"] },
       ],
     },
   ];

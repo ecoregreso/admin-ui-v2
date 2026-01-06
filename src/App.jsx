@@ -13,6 +13,7 @@ import AuditLog from "./pages/AuditLog.jsx";
 import SafetyDashboard from "./pages/SafetyDashboard.jsx";
 import PurchaseOrders from "./pages/PurchaseOrders.jsx";
 import Messages from "./pages/Messages.jsx";
+import Maintenance from "./pages/Maintenance.jsx";
 import AnalyticsOverview from "./pages/analytics/AnalyticsOverview.jsx";
 import AnalyticsRevenue from "./pages/analytics/AnalyticsRevenue.jsx";
 import AnalyticsPlayers from "./pages/analytics/AnalyticsPlayers.jsx";
@@ -244,6 +245,14 @@ export default function App() {
             element={
               <RequirePermission permission="staff:manage">
                 <AuditLog />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="maintenance"
+            element={
+              <RequirePermission permission="tenant:manage">
+                <Maintenance />
               </RequirePermission>
             }
           />
