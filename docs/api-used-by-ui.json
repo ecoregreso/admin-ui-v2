@@ -1,18 +1,6 @@
 [
   {
     "method": "ANY",
-    "path": "/api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
-    "source": "src/pages/PurchaseOrders.jsx:142",
-    "notes": "string literal"
-  },
-  {
-    "method": "GET",
-    "path": "/api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
-    "source": "src/pages/PurchaseOrders.jsx:141",
-    "notes": "fetch (default GET)"
-  },
-  {
-    "method": "ANY",
     "path": "/api/v1/...",
     "source": "src/api/client.js:11",
     "notes": "string literal"

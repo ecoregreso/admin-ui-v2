@@ -58,11 +58,9 @@ async function listFiles(dir) {
 function extractApiPath(raw) {
   if (!raw) return null;
   const value = String(raw).trim();
-  const apiIndex = value.indexOf("/api");
-  if (apiIndex === -1) return null;
-  if (apiIndex > 0 && !value.startsWith("http")) return null;
-  const normalized = apiIndex > 0 ? value.slice(apiIndex) : value;
-  if (!normalized.startsWith("/api")) return null;
+  if (/^https?:\/\//i.test(value)) return null;
+  if (!value.startsWith("/api")) return null;
+  const normalized = value;
   if (
     normalized === "/api" ||
     normalized === "/api/" ||
