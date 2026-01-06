@@ -37,7 +37,7 @@ export default function VouchersList() {
       setVouchers(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
-      setError("Failed to load vouchers.");
+      setError(e?.response?.data?.error || "Failed to load vouchers.");
     } finally {
       setLoading(false);
     }
@@ -66,7 +66,7 @@ export default function VouchersList() {
       await load();
     } catch (e) {
       console.error(e);
-      setError("Failed to create voucher.");
+      setError(e?.response?.data?.error || "Failed to create voucher.");
     }
   }
 

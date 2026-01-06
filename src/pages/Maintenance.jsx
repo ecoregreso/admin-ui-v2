@@ -4,7 +4,6 @@ import { useStaffAuth } from "../context/StaffAuthContext.jsx";
 
 export default function Maintenance() {
   const { staff } = useStaffAuth();
-  const [tenants, setTenants] = useState([]);
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [confirmText, setConfirmText] = useState("");
   const [password, setPassword] = useState("");
@@ -12,59 +11,34 @@ export default function Maintenance() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const isOwner = staff?.role === "owner";
   useEffect(() => {
-    let mounted = true;
-
-    async function loadTenants() {
-      if (!isOwner) {
-        const tenantId = staff?.tenantId || "";
-        if (mounted) {
-          setSelectedTenantId(tenantId);
-        }
-        return;
-      }
-
-      try {
-        const res = await api.get("/api/v1/admin/tenants");
-        const list = res.data?.tenants || [];
-        if (!mounted) return;
-        setTenants(list);
-        if (!selectedTenantId && list.length) {
-          setSelectedTenantId(list[0].id);
-        }
-      } catch (err) {
-        console.error("[Maintenance] load tenants error:", err);
-        if (mounted) {
-          setError("Failed to load tenants.");
-        }
-      }
-    }
-
-    loadTenants();
-
-    return () => {
-      mounted = false;
-    };
-  }, [isOwner, selectedTenantId, staff?.tenantId]);
+    setSelectedTenantId(staff?.tenantId || "");
+  }, [staff?.tenantId]);
 
   const confirmPhrase = useMemo(() => {
     if (!selectedTenantId) return "WIPE <tenantId>";
     return `WIPE ${selectedTenantId}`;
   }, [selectedTenantId]);
 
+  const ownerWithoutTenant = staff?.role === "owner" && !selectedTenantId;
   const canSubmit =
     !!selectedTenantId &&
     confirmText.trim() === confirmPhrase &&
     password.trim().length > 0 &&
-    !loading;
+    !loading &&
+    !ownerWithoutTenant;
 
   async function handleWipe() {
     setError("");
     setStatus("");
 
+    if (ownerWithoutTenant) {
+      setError("Owner accounts must use the Owner Console for wipes.");
+      return;
+    }
+
     if (!selectedTenantId) {
-      setError("Select a tenant before wiping data.");
+      setError("No tenant assigned to this account.");
       return;
     }
 
@@ -117,33 +91,16 @@ export default function Maintenance() {
         {status && <div className="alert">{status}</div>}
 
         <div className="form-grid" style={{ marginTop: 12 }}>
-          {isOwner ? (
-            <div className="field">
-              <label>Tenant</label>
-              <select
-                value={selectedTenantId}
-                onChange={(e) => setSelectedTenantId(e.target.value)}
-                className="select"
-              >
-                {tenants.length === 0 && <option value="">No tenants available</option>}
-                {tenants.map((tenant) => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.name} ({tenant.id})
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <div className="field">
-              <label>Tenant</label>
-              <input
-                className="input"
-                value={selectedTenantId || ""}
-                readOnly
-                placeholder="No tenant assigned"
-              />
-            </div>
-          )}
+          <div className="field">
+            <label>Tenant</label>
+            <input
+              className="input"
+              value={selectedTenantId || ""}
+              readOnly
+              placeholder="No tenant assigned"
+            />
+            <div className="hint">This page is restricted to your tenant only.</div>
+          </div>
 
           <div className="field">
             <label>Confirmation phrase</label>
