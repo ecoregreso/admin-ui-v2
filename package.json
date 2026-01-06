@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "api:extract": "node scripts/extractApiUsage.js",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",

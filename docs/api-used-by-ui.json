@@ -1,0 +1,980 @@
+[
+  {
+    "method": "ANY",
+    "path": ".../api/v1",
+    "source": "src/api/client.js:10",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../../api/analyticsApi",
+    "source": "src/pages/analytics/AnalyticsAudit.jsx:2",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../../api/analyticsApi",
+    "source": "src/pages/analytics/AnalyticsFunnel.jsx:13",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../../api/analyticsApi",
+    "source": "src/pages/analytics/AnalyticsGames.jsx:16",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../../api/analyticsApi",
+    "source": "src/pages/analytics/AnalyticsLtv.jsx:17",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../../api/analyticsApi",
+    "source": "src/pages/analytics/AnalyticsOps.jsx:16",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../../api/analyticsApi",
+    "source": "src/pages/analytics/AnalyticsOverview.jsx:19",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../../api/analyticsApi",
+    "source": "src/pages/analytics/AnalyticsPlayers.jsx:22",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../../api/analyticsApi",
+    "source": "src/pages/analytics/AnalyticsRevenue.jsx:18",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/auditApi",
+    "source": "src/pages/AuditLog.jsx:2",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/client",
+    "source": "src/brand/loadBrand.js:1",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/client",
+    "source": "src/context/StaffAuthContext.jsx:4",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/client",
+    "source": "src/pages/FinanceQueue.jsx:2",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/client",
+    "source": "src/pages/Maintenance.jsx:2",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/dashboardApi",
+    "source": "src/pages/Dashboard.jsx:11",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/messagesApi",
+    "source": "src/pages/Messages.jsx:12",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/playersApi",
+    "source": "src/pages/PlayersList.jsx:9",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/purchaseOrdersApi.js",
+    "source": "src/pages/PurchaseOrders.jsx:14",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/pushApi",
+    "source": "src/pages/Messages.jsx:19",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/reportsApi",
+    "source": "src/pages/ReportsDashboard.jsx:30",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/safetyApi",
+    "source": "src/pages/SafetyDashboard.jsx:18",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/sessionsApi",
+    "source": "src/pages/SessionsList.jsx:2",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/staffAdminApi",
+    "source": "src/pages/StaffList.jsx:7",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/transactionsApi",
+    "source": "src/pages/TransactionsList.jsx:2",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "../api/vouchersApi",
+    "source": "src/pages/VouchersList.jsx:2",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1",
+    "source": "src/api/client.js:4",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/...",
+    "source": "src/api/client.js:11",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/analytics/attribution",
+    "source": "src/api/analyticsApi.js:53",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/analytics/attribution",
+    "source": "src/api/analyticsApi.js:53",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/analytics/funnel",
+    "source": "src/api/analyticsApi.js:43",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/analytics/funnel",
+    "source": "src/api/analyticsApi.js:43",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/analytics/games",
+    "source": "src/api/analyticsApi.js:33",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/analytics/games",
+    "source": "src/api/analyticsApi.js:33",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/analytics/ltv",
+    "source": "src/api/analyticsApi.js:48",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/analytics/ltv",
+    "source": "src/api/analyticsApi.js:48",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/analytics/ops",
+    "source": "src/api/analyticsApi.js:38",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/analytics/ops",
+    "source": "src/api/analyticsApi.js:38",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/analytics/overview",
+    "source": "src/api/analyticsApi.js:18",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/analytics/overview",
+    "source": "src/api/analyticsApi.js:18",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/analytics/players",
+    "source": "src/api/analyticsApi.js:28",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/analytics/players",
+    "source": "src/api/analyticsApi.js:28",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/analytics/revenue",
+    "source": "src/api/analyticsApi.js:23",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/analytics/revenue",
+    "source": "src/api/analyticsApi.js:23",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/audit",
+    "source": "src/api/auditApi.js:16",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/audit",
+    "source": "src/api/auditApi.js:16",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/audit/run",
+    "source": "src/api/analyticsApi.js:58",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/audit/run",
+    "source": "src/api/analyticsApi.js:58",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/players",
+    "source": "src/api/playersApi.js:4",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/players",
+    "source": "src/api/playersApi.js:4",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/players/${id}",
+    "source": "src/api/playersApi.js:11",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/players/${id}",
+    "source": "src/api/playersApi.js:11",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/players/${id}/adjust",
+    "source": "src/api/playersApi.js:16",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/players/${id}/adjust",
+    "source": "src/api/playersApi.js:16",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/players/${id}/rounds",
+    "source": "src/api/playersApi.js:36",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/players/${id}/rounds",
+    "source": "src/api/playersApi.js:36",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/players/${id}/sessions",
+    "source": "src/api/playersApi.js:43",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/players/${id}/sessions",
+    "source": "src/api/playersApi.js:43",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/players/${id}/transactions",
+    "source": "src/api/playersApi.js:27",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/players/${id}/transactions",
+    "source": "src/api/playersApi.js:27",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/reports/behavior",
+    "source": "src/api/reportsApi.js:22",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/behavior",
+    "source": "src/api/reportsApi.js:22",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/reports/daily",
+    "source": "src/api/reportsApi.js:15",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/daily",
+    "source": "src/api/reportsApi.js:15",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/reports/operations",
+    "source": "src/api/reportsApi.js:43",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/operations",
+    "source": "src/api/reportsApi.js:43",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/reports/performance",
+    "source": "src/api/reportsApi.js:36",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/performance",
+    "source": "src/api/reportsApi.js:36",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/reports/range",
+    "source": "src/api/dashboardApi.js:8",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/reports/range",
+    "source": "src/api/reportsApi.js:8",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/range",
+    "source": "src/api/dashboardApi.js:8",
+    "notes": "axios call"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/range",
+    "source": "src/api/reportsApi.js:8",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/reports/risk",
+    "source": "src/api/reportsApi.js:29",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/risk",
+    "source": "src/api/reportsApi.js:29",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/safety/actions",
+    "source": "src/api/safetyApi.js:9",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/safety/actions",
+    "source": "src/api/safetyApi.js:9",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/safety/summary",
+    "source": "src/api/safetyApi.js:4",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/safety/summary",
+    "source": "src/api/safetyApi.js:4",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/sessions",
+    "source": "src/api/sessionsApi.js:4",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/sessions",
+    "source": "src/api/sessionsApi.js:4",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/sessions/${id}/revoke",
+    "source": "src/api/sessionsApi.js:11",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/sessions/${id}/revoke",
+    "source": "src/api/sessionsApi.js:11",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/staff",
+    "source": "src/api/staffAdminApi.js:5",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/staff",
+    "source": "src/api/staffAdminApi.js:11",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/staff",
+    "source": "src/api/staffAdminApi.js:5",
+    "notes": "axios call"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/staff",
+    "source": "src/api/staffAdminApi.js:11",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/staff/${id}",
+    "source": "src/api/staffAdminApi.js:24",
+    "notes": "string literal"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/admin/staff/${id}",
+    "source": "src/api/staffAdminApi.js:24",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/staff/${id}/password",
+    "source": "src/api/staffAdminApi.js:35",
+    "notes": "string literal"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/admin/staff/${id}/password",
+    "source": "src/api/staffAdminApi.js:35",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/tenants/${selectedTenantId}/wipe",
+    "source": "src/pages/Maintenance.jsx:62",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/tenants/${selectedTenantId}/wipe",
+    "source": "src/pages/Maintenance.jsx:62",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/admin/transactions",
+    "source": "src/api/transactionsApi.js:4",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/transactions",
+    "source": "src/api/transactionsApi.js:4",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/deposits/admin/pending",
+    "source": "src/pages/FinanceQueue.jsx:21",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/deposits/admin/pending",
+    "source": "src/pages/FinanceQueue.jsx:21",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/deposits/dev/mark-paid",
+    "source": "src/pages/FinanceQueue.jsx:43",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/deposits/dev/mark-paid",
+    "source": "src/pages/FinanceQueue.jsx:43",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/public/brand",
+    "source": "src/brand/loadBrand.js:46",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/purchase-orders",
+    "source": "src/api/purchaseOrdersApi.js:14",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/purchase-orders",
+    "source": "src/api/purchaseOrdersApi.js:19",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/purchase-orders",
+    "source": "src/api/purchaseOrdersApi.js:19",
+    "notes": "axios call"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/purchase-orders",
+    "source": "src/api/purchaseOrdersApi.js:14",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/purchase-orders/${orderId}",
+    "source": "src/api/purchaseOrdersApi.js:54",
+    "notes": "string literal"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/purchase-orders/${orderId}",
+    "source": "src/api/purchaseOrdersApi.js:54",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/purchase-orders/${orderId}/acknowledge",
+    "source": "src/api/purchaseOrdersApi.js:49",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/purchase-orders/${orderId}/acknowledge",
+    "source": "src/api/purchaseOrdersApi.js:49",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/purchase-orders/${orderId}/approve",
+    "source": "src/api/purchaseOrdersApi.js:34",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/purchase-orders/${orderId}/approve",
+    "source": "src/api/purchaseOrdersApi.js:34",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/purchase-orders/${orderId}/confirm-payment",
+    "source": "src/api/purchaseOrdersApi.js:39",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/purchase-orders/${orderId}/confirm-payment",
+    "source": "src/api/purchaseOrdersApi.js:39",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/purchase-orders/${orderId}/mark-credited",
+    "source": "src/api/purchaseOrdersApi.js:44",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/purchase-orders/${orderId}/mark-credited",
+    "source": "src/api/purchaseOrdersApi.js:44",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/purchase-orders/${orderId}/messages",
+    "source": "src/api/purchaseOrdersApi.js:24",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/purchase-orders/${orderId}/messages",
+    "source": "src/api/purchaseOrdersApi.js:29",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/purchase-orders/${orderId}/messages",
+    "source": "src/api/purchaseOrdersApi.js:24",
+    "notes": "axios call"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/purchase-orders/${orderId}/messages",
+    "source": "src/api/purchaseOrdersApi.js:29",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/purchase-orders/owner-address",
+    "source": "src/api/purchaseOrdersApi.js:4",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/purchase-orders/owner-address",
+    "source": "src/api/purchaseOrdersApi.js:9",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/purchase-orders/owner-address",
+    "source": "src/api/purchaseOrdersApi.js:4",
+    "notes": "axios call"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/purchase-orders/owner-address",
+    "source": "src/api/purchaseOrdersApi.js:9",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/login",
+    "source": "src/context/StaffAuthContext.jsx:40",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/staff/login",
+    "source": "src/context/StaffAuthContext.jsx:40",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/logout",
+    "source": "src/context/StaffAuthContext.jsx:69",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/staff/logout",
+    "source": "src/context/StaffAuthContext.jsx:69",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/messaging/keys",
+    "source": "src/api/messagesApi.js:5",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/staff/messaging/keys",
+    "source": "src/api/messagesApi.js:5",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/messaging/keys/${encodeURIComponent(username)}",
+    "source": "src/api/messagesApi.js:10",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/staff/messaging/keys/${encodeURIComponent(username)}",
+    "source": "src/api/messagesApi.js:10",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/messaging/keys/self",
+    "source": "src/api/messagesApi.js:15",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/staff/messaging/keys/self",
+    "source": "src/api/messagesApi.js:15",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/messaging/messages",
+    "source": "src/api/messagesApi.js:20",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/messaging/messages",
+    "source": "src/api/messagesApi.js:33",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/staff/messaging/messages",
+    "source": "src/api/messagesApi.js:33",
+    "notes": "axios call"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/staff/messaging/messages",
+    "source": "src/api/messagesApi.js:20",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/messaging/messages/${id}",
+    "source": "src/api/messagesApi.js:43",
+    "notes": "string literal"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/staff/messaging/messages/${id}",
+    "source": "src/api/messagesApi.js:43",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/messaging/messages/${id}/read",
+    "source": "src/api/messagesApi.js:38",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/staff/messaging/messages/${id}/read",
+    "source": "src/api/messagesApi.js:38",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/messaging/messages/inbox",
+    "source": "src/api/messagesApi.js:55",
+    "notes": "string literal"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/staff/messaging/messages/inbox",
+    "source": "src/api/messagesApi.js:55",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/messaging/messages/thread/${encodeURIComponent(threadId)}",
+    "source": "src/api/messagesApi.js:49",
+    "notes": "string literal"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/staff/messaging/messages/thread/${encodeURIComponent(threadId)}",
+    "source": "src/api/messagesApi.js:48",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/push/devices",
+    "source": "src/api/pushApi.js:9",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/staff/push/devices",
+    "source": "src/api/pushApi.js:9",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/push/devices/${id}",
+    "source": "src/api/pushApi.js:19",
+    "notes": "string literal"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/staff/push/devices/${id}",
+    "source": "src/api/pushApi.js:19",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/push/register",
+    "source": "src/api/pushApi.js:14",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/staff/push/register",
+    "source": "src/api/pushApi.js:14",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/push/test",
+    "source": "src/api/pushApi.js:24",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/staff/push/test",
+    "source": "src/api/pushApi.js:24",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/staff/push/vapid-public",
+    "source": "src/api/pushApi.js:4",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/staff/push/vapid-public",
+    "source": "src/api/pushApi.js:4",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/vouchers",
+    "source": "src/api/vouchersApi.js:10",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/vouchers",
+    "source": "src/api/vouchersApi.js:10",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/vouchers?limit=${limit}",
+    "source": "src/api/vouchersApi.js:5",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/vouchers?limit=${limit}",
+    "source": "src/api/vouchersApi.js:5",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/withdrawals/admin/pending",
+    "source": "src/pages/FinanceQueue.jsx:22",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/withdrawals/admin/pending",
+    "source": "src/pages/FinanceQueue.jsx:22",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "/api/v1/withdrawals/dev/mark-sent",
+    "source": "src/pages/FinanceQueue.jsx:54",
+    "notes": "string literal"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/withdrawals/dev/mark-sent",
+    "source": "src/pages/FinanceQueue.jsx:54",
+    "notes": "axios call"
+  },
+  {
+    "method": "ANY",
+    "path": "http://localhost:3000/api/v1",
+    "source": "src/layout/components/PlayerInspector.jsx:5",
+    "notes": "string literal"
+  },
+  {
+    "method": "ANY",
+    "path": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+    "source": "src/pages/PurchaseOrders.jsx:142",
+    "notes": "string literal"
+  },
+  {
+    "method": "GET",
+    "path": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+    "source": "src/pages/PurchaseOrders.jsx:141",
+    "notes": "fetch (default GET)"
+  }
+]
