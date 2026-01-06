@@ -24,6 +24,16 @@ export default function PurchaseOrders() {
   const [btcAmount, setBtcAmount] = useState("");
   const [btcRate, setBtcRate] = useState(""); // FUN per BTC (1 FUN ≈ 1 USD)
   const [note, setNote] = useState("");
+  const [ownerTenantId, setOwnerTenantId] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      const fromUrl = (params.get("tenantId") || "").trim();
+      const fromStore = (localStorage.getItem("ptu_owner_tenant_id") || "").trim();
+      return fromUrl || fromStore || "";
+    } catch {
+      return (localStorage.getItem("ptu_owner_tenant_id") || "").trim();
+    }
+  });
 
   const [ownerBtcAddress, setOwnerBtcAddressState] = useState("");
   const [messagesByOrder, setMessagesByOrder] = useState({});
@@ -58,19 +68,33 @@ export default function PurchaseOrders() {
     () => (staff?.permissions || []).includes("finance:write"),
     [staff]
   );
+  const isOwner = useMemo(() => staff?.role === "owner", [staff]);
   const canPlaceOrder = useMemo(
-    () => staff?.role === "agent" || staff?.role === "distributor",
+    () => staff?.role === "agent" || staff?.role === "distributor" || staff?.role === "owner",
     [staff]
   );
+  const tenantIdForOwner = useMemo(() => {
+    if (!isOwner) return "";
+    return (ownerTenantId || staff?.tenantId || "").trim();
+  }, [isOwner, ownerTenantId, staff]);
 
   async function load() {
     setLoading(true);
     setError("");
     try {
-      const data = await listOrders();
+      const data = await listOrders(isOwner && tenantIdForOwner ? tenantIdForOwner : undefined);
       setOrders(data.orders || []);
-      const addrRes = await getOwnerAddress();
-      setOwnerBtcAddressState(addrRes?.ownerBtcAddress || "");
+      let addrRes = null;
+      if (isOwner && tenantIdForOwner) {
+        addrRes = await getOwnerAddress(tenantIdForOwner);
+        setOwnerBtcAddressState(addrRes?.ownerBtcAddress || "");
+      } else if (!isOwner) {
+        addrRes = await getOwnerAddress();
+        setOwnerBtcAddressState(addrRes?.ownerBtcAddress || "");
+      } else {
+        setOwnerBtcAddressState("");
+      }
+      const addressFallback = addrRes?.ownerBtcAddress || "";
       // preload messages for visible orders
       for (const o of data.orders || []) {
         await loadMessages(o.id);
@@ -78,7 +102,8 @@ export default function PurchaseOrders() {
           ...prev,
           [o.id]: {
             ...(prev[o.id] || {}),
-            approveAddress: prev[o.id]?.approveAddress || o.ownerBtcAddress || addrRes?.ownerBtcAddress || "",
+            approveAddress:
+              prev[o.id]?.approveAddress || o.ownerBtcAddress || addressFallback || "",
           },
         }));
       }
@@ -101,7 +126,11 @@ export default function PurchaseOrders() {
     setSuccess("");
 
     if (!canPlaceOrder) {
-      setError("Only agents or distributors can place funcoin orders.");
+      setError("Only agents, distributors, or owners can place funcoin orders.");
+      return;
+    }
+    if (isOwner && !tenantIdForOwner) {
+      setError("Owner must provide a tenant ID to place an order.");
       return;
     }
 
@@ -117,12 +146,16 @@ export default function PurchaseOrders() {
     }
 
     try {
-      await createOrder({
+      const payload = {
         funAmount: amountNum,
         btcAmount: btcNum,
         btcRate: Number(btcRate) || null,
         note: note.trim(),
-      });
+      };
+      if (isOwner && tenantIdForOwner) {
+        payload.tenantId = tenantIdForOwner;
+      }
+      await createOrder(payload);
       setFunAmount("");
       setBtcAmount("");
       setBtcRate("");
@@ -277,11 +310,28 @@ export default function PurchaseOrders() {
 
       {!canPlaceOrder && (
         <div className="alert alert-info">
-          Only agents or distributors can place funcoin orders. You can still view existing requests.
+          Only agents, distributors, or owners can place funcoin orders. You can still view existing requests.
         </div>
       )}
 
       <form className="form-grid" onSubmit={handleSubmit}>
+        {isOwner && (
+          <div className="field span-2">
+            <label>Tenant ID (required for owner orders)</label>
+            <input
+              type="text"
+              value={ownerTenantId}
+              onChange={(e) => {
+                const value = e.target.value;
+                setOwnerTenantId(value);
+                localStorage.setItem("ptu_owner_tenant_id", value);
+              }}
+              className="input"
+              placeholder="e.g., tenant UUID"
+              disabled={loading}
+            />
+          </div>
+        )}
         <div className="field">
           <label>FUN Amount</label>
           <input

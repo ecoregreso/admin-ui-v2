@@ -1,12 +1,14 @@
 import api from "./client";
 
-export async function getOwnerAddress() {
-  const res = await api.get("/api/v1/purchase-orders/owner-address");
+export async function getOwnerAddress(tenantId) {
+  const config = tenantId ? { params: { tenantId } } : undefined;
+  const res = await api.get("/api/v1/purchase-orders/owner-address", config);
   return res.data; // { ok, ownerBtcAddress }
 }
 
-export async function setOwnerAddress(ownerBtcAddress) {
-  const res = await api.post("/api/v1/purchase-orders/owner-address", { ownerBtcAddress });
+export async function setOwnerAddress(ownerBtcAddress, tenantId) {
+  const payload = tenantId ? { ownerBtcAddress, tenantId } : { ownerBtcAddress };
+  const res = await api.post("/api/v1/purchase-orders/owner-address", payload);
   return res.data; // { ok, ownerBtcAddress }
 }
 
@@ -15,8 +17,9 @@ export async function createOrder(payload) {
   return res.data; // { ok, order }
 }
 
-export async function listOrders() {
-  const res = await api.get("/api/v1/purchase-orders");
+export async function listOrders(tenantId) {
+  const config = tenantId ? { params: { tenantId } } : undefined;
+  const res = await api.get("/api/v1/purchase-orders", config);
   return res.data; // { ok, orders }
 }
 
