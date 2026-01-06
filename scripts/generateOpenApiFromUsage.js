@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import process from "node:process";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -197,7 +198,7 @@ function stripIndent(text) {
 
 function escapeYaml(value) {
   if (value === "") return '""';
-  if (/[:\-\[\]\{\},#&*!|>'"%@`]/.test(value) || value.includes("\n")) {
+  if (/[[\]{}:,#&*!|>'"%@`-]/.test(value) || value.includes("\n")) {
     return JSON.stringify(value);
   }
   return value;

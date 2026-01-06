@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import styled from "styled-components";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useStaffAuth } from "../context/StaffAuthContext.jsx";
@@ -10,20 +10,17 @@ const Login = () => {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [tenantId, setTenantId] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
+  const [tenantId, setTenantId] = useState(() => {
     try {
       const params = new URLSearchParams(location.search || "");
       const fromUrl = (params.get("tenantId") || "").trim();
       const fromStore = (localStorage.getItem("ptu_tenant_id") || "").trim();
-      setTenantId(fromUrl || fromStore || "");
+      return fromUrl || fromStore || "";
     } catch {
-      // ignore
+      return "";
     }
-  }, [location.search]);
-
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   const canSubmit = useMemo(
     () => username.trim().length > 0 && password.length > 0 && !submitting,
