@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useStaffAuth } from "../context/StaffAuthContext";
 import { createVoucher, listVouchers } from "../api/vouchersApi";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
@@ -24,6 +25,16 @@ export default function VouchersList() {
   const [amount, setAmount] = useState("");
   const [bonusAmount, setBonusAmount] = useState("");
   const [currency, setCurrency] = useState("FUN");
+  const { staff } = useStaffAuth();
+  const isOwner = staff?.role === "owner";
+  const [ownerTenantId, setOwnerTenantId] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      return (localStorage.getItem("ptu_owner_tenant_id") || "").trim();
+    } catch {
+      return "";
+    }
+  });
 
   const [created, setCreated] = useState(null);
   const [search, setSearch] = useState("");
@@ -47,6 +58,19 @@ export default function VouchersList() {
     load();
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (isOwner) {
+        localStorage.setItem("ptu_owner_tenant_id", ownerTenantId);
+      } else {
+        localStorage.removeItem("ptu_owner_tenant_id");
+      }
+    } catch (err) {
+      console.warn("[VouchersList] failed to persist owner tenant id:", err);
+    }
+  }, [isOwner, ownerTenantId]);
+
   async function onCreate(e) {
     e.preventDefault();
     setError("");
@@ -58,8 +82,17 @@ export default function VouchersList() {
     if (!Number.isFinite(a) || a <= 0) return setError("Amount must be > 0.");
     if (!Number.isFinite(b) || b < 0) return setError("Bonus must be >= 0.");
 
+    const ownerTenant = ownerTenantId.trim();
+    if (isOwner && !ownerTenant) {
+      return setError("Owner must provide a tenant ID before creating vouchers.");
+    }
+
     try {
-      const data = await createVoucher({ amount: a, bonusAmount: b, currency });
+      const payload = { amount: a, bonusAmount: b, currency };
+      if (isOwner) {
+        payload.tenantId = ownerTenant;
+      }
+      const data = await createVoucher(payload);
       setCreated(data);
       setAmount("");
       setBonusAmount("");
@@ -130,6 +163,20 @@ export default function VouchersList() {
               <option value="USD">USD</option>
             </select>
           </div>
+
+          {isOwner && (
+            <div className="field">
+              <label>Tenant ID</label>
+              <input
+                type="text"
+                value={ownerTenantId}
+                onChange={(e) => setOwnerTenantId(e.target.value || "")}
+                className="input"
+                placeholder="Tenant UUID"
+              />
+              <div className="hint">Owners must specify the tenant to issue a voucher.</div>
+            </div>
+          )}
 
           <div className="field" style={{ alignSelf: "end" }}>
             <button className="btn btn-primary" type="submit" disabled={loading}>
