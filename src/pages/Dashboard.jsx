@@ -57,9 +57,9 @@ export default function Dashboard() {
   const summary = data?.summary || {};
 
   const kpis = {
-    totalPlayers: players.active || 0,
-    activePlayers: players.active || 0,
-    newPlayers24h: players.new || 0,
+    totalPlayers: players.total ?? players.active ?? 0,
+    activePlayers: players.active ?? 0,
+    newPlayers24h: players.new ?? 0,
     walletTotal: summary.totalCredits || 0,
     credits24h: vouchers.redeemed?.totalAmount || 0,
     ggr24h: games.ggr || tx.aggregates?.netGame || 0,
@@ -72,8 +72,10 @@ export default function Dashboard() {
   const sessions = {
     activePlayers: data?.sessions?.activePlayers ?? 0,
     activeStaff: data?.sessions?.activeStaff ?? 0,
-    totalPlayers: data?.sessions?.totalPlayers ?? 0,
-    totalStaff: data?.sessions?.totalStaff ?? 0,
+    totalPlayerSessions:
+      data?.sessions?.totalPlayerSessions ?? data?.sessions?.totalPlayers ?? 0,
+    totalStaffSessions:
+      data?.sessions?.totalStaffSessions ?? data?.sessions?.totalStaff ?? 0,
     staffSessions: data?.sessions?.staffSessions || [],
     playerSessions: data?.sessions?.playerSessions || [],
   };
@@ -115,7 +117,7 @@ export default function Dashboard() {
             <div className="stat-label">New Players (24h)</div>
             <div className="stat-value">{fmtNumber(kpis.newPlayers24h, 0)}</div>
             <div className="stat-meta">
-              Sessions live: {fmtNumber(sessions.activePlayers, 0)} / {fmtNumber(sessions.totalPlayers, 0)}
+              Player sessions: {fmtNumber(sessions.activePlayers, 0)} / {fmtNumber(sessions.totalPlayerSessions, 0)}
             </div>
           </div>
           <div className="stat-card">
@@ -137,7 +139,7 @@ export default function Dashboard() {
             <div className="stat-label">Debits (24h)</div>
             <div className="stat-value">{fmtNumber(kpis.debits24h)}</div>
             <div className="stat-meta">
-              Staff sessions: {fmtNumber(sessions.activeStaff, 0)} / {fmtNumber(sessions.totalStaff, 0)}
+              Staff sessions: {fmtNumber(sessions.activeStaff, 0)} / {fmtNumber(sessions.totalStaffSessions, 0)}
             </div>
           </div>
         </div>
@@ -182,16 +184,16 @@ export default function Dashboard() {
           <div className="stack">
             <div className="inline">
               <span className="tag tag-blue">
-                Players Active {fmtNumber(sessions.activePlayers, 0)}
+                Player Sessions Active {fmtNumber(sessions.activePlayers, 0)}
               </span>
               <span className="tag tag-blue">
-                Players Total {fmtNumber(sessions.totalPlayers, 0)}
+                Player Sessions Total {fmtNumber(sessions.totalPlayerSessions, 0)}
               </span>
               <span className="tag tag-red">
-                Staff Active {fmtNumber(sessions.activeStaff, 0)}
+                Staff Sessions Active {fmtNumber(sessions.activeStaff, 0)}
               </span>
               <span className="tag tag-red">
-                Staff Total {fmtNumber(sessions.totalStaff, 0)}
+                Staff Sessions Total {fmtNumber(sessions.totalStaffSessions, 0)}
               </span>
             </div>
             <div className="panel-subtitle">Active player sessions</div>

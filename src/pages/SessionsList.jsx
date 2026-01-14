@@ -10,11 +10,22 @@ function fmtDate(value) {
   }
 }
 
+function fmtNumber(value) {
+  if (value == null) return "0";
+  return Number(value).toLocaleString();
+}
+
 export default function SessionsList() {
   const { staff } = useStaffAuth();
   const perms = staff?.permissions || [];
 
   const [sessions, setSessions] = useState([]);
+  const [summary, setSummary] = useState({
+    actorType: "all",
+    total: 0,
+    active: 0,
+    revoked: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [actorType, setActorType] = useState("all");
@@ -28,6 +39,14 @@ export default function SessionsList() {
       const data = await listSessions({ actorType, status, limit });
       if (data.ok) {
         setSessions(data.sessions || []);
+        setSummary(
+          data.summary || {
+            actorType,
+            total: 0,
+            active: 0,
+            revoked: 0,
+          }
+        );
       } else {
         setError(data.error || "Failed to load sessions");
       }
@@ -59,6 +78,10 @@ export default function SessionsList() {
     if (session.actorType === "user") return perms.includes("player:write");
     return false;
   }
+
+  const summaryScope = summary?.actorType || actorType;
+  const scopeLabel =
+    summaryScope === "user" ? "players" : summaryScope === "staff" ? "staff" : "all actors";
 
   return (
     <div className="page">
@@ -99,6 +122,19 @@ export default function SessionsList() {
         </div>
 
         {error && <div className="alert">{error}</div>}
+
+        <div className="stat-grid">
+          <div className="stat-card">
+            <div className="stat-label">Active Sessions</div>
+            <div className="stat-value">{fmtNumber(summary.active)}</div>
+            <div className="stat-meta">Scope: {scopeLabel} · currently logged in</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Total Login Sessions</div>
+            <div className="stat-value">{fmtNumber(summary.total)}</div>
+            <div className="stat-meta">Scope: {scopeLabel} · active + revoked</div>
+          </div>
+        </div>
       </div>
 
       <div className="panel">
