@@ -1,16 +1,6 @@
 // src/components/PlayerInspector.jsx
 import React, { useState } from "react";
-
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
-
-function getToken() {
-  return (
-    localStorage.getItem("ptu_staff_token") ||
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("token")
-  );
-}
+import api from "../../api/client";
 
 export default function PlayerInspector() {
   const [query, setQuery] = useState("");
@@ -26,27 +16,9 @@ export default function PlayerInspector() {
   const [loadingTx, setLoadingTx] = useState(false);
   const [loadingRounds, setLoadingRounds] = useState(false);
 
-  async function apiGet(path) {
-    const token = getToken();
-    if (!token) {
-      throw new Error("No admin token in localStorage (accessToken).");
-    }
-
-    const res = await fetch(`${API_BASE}${path}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error(
-        `Request failed: ${res.status} ${res.statusText} – ${txt}`
-      );
-    }
-
-    return res.json();
+  async function apiGet(path, params) {
+    const res = await api.get(path, params ? { params } : undefined);
+    return res.data;
   }
 
   async function handleSearch(e) {
@@ -59,16 +31,24 @@ export default function PlayerInspector() {
     setRounds([]);
 
     try {
-      const data = await apiGet(
-        `/admin/players/search?q=${encodeURIComponent(query.trim())}`
-      );
-      setPlayers(Array.isArray(data) ? data : []);
-      if (!data.length) {
+      const data = await apiGet("/api/v1/admin/players", {
+        search: query.trim(),
+      });
+      const list = Array.isArray(data?.players) ? data.players : [];
+      const normalized = list.map((p) => ({
+        ...p,
+        username: p.username || p.userCode || p.email || p.id,
+        role: p.role || "player",
+        isActive:
+          typeof p.isActive === "boolean" ? p.isActive : String(p.status || "") === "active",
+      }));
+      setPlayers(normalized);
+      if (!list.length) {
         setError("No players found for that query.");
       }
     } catch (err) {
       console.error(err);
-      setError(err.message || "Search failed.");
+      setError(err?.response?.data?.error || err.message || "Search failed.");
     } finally {
       setSearching(false);
     }
@@ -83,8 +63,27 @@ export default function PlayerInspector() {
 
     try {
       setLoadingWallets(true);
-      const w = await apiGet(`/admin/players/${player.id}/wallets`);
-      setWallets(w);
+      const detail = await apiGet(`/api/v1/admin/players/${player.id}`);
+      const balance = detail?.player?.balance;
+      if (detail?.player) {
+        const normalizedDetail = {
+          ...detail.player,
+          username: detail.player.username || detail.player.userCode || detail.player.email || player.id,
+          role: detail.player.role || "player",
+          isActive:
+            typeof detail.player.isActive === "boolean"
+              ? detail.player.isActive
+              : String(detail.player.status || "") === "active",
+        };
+        setSelectedPlayer((prev) => ({ ...prev, ...normalizedDetail }));
+      }
+      setWallets([
+        {
+          id: detail?.player?.id || player.id,
+          currency: "FUN",
+          balance: Number.isFinite(Number(balance)) ? Number(balance) : 0,
+        },
+      ]);
     } catch (err) {
       console.error(err);
       setError((prev) => prev || "Failed to load wallets.");
@@ -94,10 +93,10 @@ export default function PlayerInspector() {
 
     try {
       setLoadingTx(true);
-      const tx = await apiGet(
-        `/admin/players/${player.id}/transactions?limit=50`
-      );
-      setTransactions(tx);
+      const tx = await apiGet(`/api/v1/admin/players/${player.id}/transactions`, {
+        limit: 50,
+      });
+      setTransactions(tx?.transactions || []);
     } catch (err) {
       console.error(err);
       setError((prev) => prev || "Failed to load transactions.");
@@ -107,10 +106,10 @@ export default function PlayerInspector() {
 
     try {
       setLoadingRounds(true);
-      const r = await apiGet(
-        `/admin/players/${player.id}/game-rounds?limit=50`
-      );
-      setRounds(Array.isArray(r) ? r : []);
+      const r = await apiGet(`/api/v1/admin/players/${player.id}/rounds`, {
+        limit: 50,
+      });
+      setRounds(Array.isArray(r?.rounds) ? r.rounds : []);
     } catch (err) {
       console.error(err);
       // rounds are optional, don’t scream too loud

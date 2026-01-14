@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import api from "../../api/client";
 
 export default function VoucherPanel({ staff }) {
   const [vouchers, setVouchers] = useState([]);
@@ -11,48 +12,30 @@ export default function VoucherPanel({ staff }) {
 
   const [redeemStatus, setRedeemStatus] = useState("");
 
-  const token = localStorage.getItem("auth_token");
-
-  // Treat 'admin' as top-level staff
-  const canViewList = ["admin", "agent", "operator"].includes(staff.role);
-  const canCreateRedeem = ["admin", "cashier", "agent", "operator"].includes(
-    staff.role
+  const staffRole = staff?.role || "";
+  const canViewList = ["owner", "operator", "agent", "distributor", "cashier"].includes(
+    staffRole
+  );
+  const canCreateRedeem = ["owner", "operator", "agent", "distributor", "cashier"].includes(
+    staffRole
   );
 
   async function fetchVouchers() {
     if (!canViewList) return;
-    if (!token) return;
-
     setLoadingList(true);
     setListError("");
 
     try {
-      const res = await fetch(`/vouchers`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (res.status === 403) {
-        setListError("Insufficient role to view voucher list.");
-        setLoadingList(false);
-        return;
-      }
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setListError(data.error || `Failed to load vouchers (${res.status})`);
-        setLoadingList(false);
-        return;
-      }
+      const res = await api.get("/api/v1/vouchers");
+      const data = res.data;
 
       // Backend returns an array
       setVouchers(Array.isArray(data) ? data : []);
       setLoadingList(false);
     } catch (err) {
       console.error("[VoucherPanel] fetch error:", err);
-      setListError("Network error while loading vouchers.");
+      const message = err?.response?.data?.error || err.message || "Network error";
+      setListError(message);
       setLoadingList(false);
     }
   }
@@ -60,13 +43,11 @@ export default function VoucherPanel({ staff }) {
   useEffect(() => {
     fetchVouchers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [staff.role]);
+  }, [staffRole]);
 
   async function handleCreateVoucher(e) {
     e.preventDefault();
     if (!canCreateRedeem) return;
-    if (!token) return;
-
     setCreateStatus("");
 
     const amount = parseFloat(createAmount);
@@ -82,24 +63,11 @@ export default function VoucherPanel({ staff }) {
     }
 
     try {
-      const res = await fetch(`/vouchers`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          amount,
-          bonusAmount: bonus,
-        }),
+      const res = await api.post("/api/v1/vouchers", {
+        amount,
+        bonusAmount: bonus,
       });
-
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        setCreateStatus(data.error || `Failed to create voucher (${res.status})`);
-        return;
-      }
+      const data = res.data;
 
       const voucher = data.voucher || data;
       const pin = data.pin;
@@ -142,7 +110,7 @@ export default function VoucherPanel({ staff }) {
 
         {!canCreateRedeem && (
           <div className="panel-warning">
-            Your role ({staff.role}) cannot create vouchers.
+            Your role ({staffRole || "unknown"}) cannot create vouchers.
           </div>
         )}
 
@@ -223,7 +191,7 @@ export default function VoucherPanel({ staff }) {
 
         {!canViewList && (
           <div className="panel-warning">
-            Your role ({staff.role}) cannot view voucher history.
+            Your role ({staffRole || "unknown"}) cannot view voucher history.
           </div>
         )}
 

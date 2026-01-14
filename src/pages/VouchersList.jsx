@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useStaffAuth } from "../context/StaffAuthContext";
 import { createVoucher, listVouchers } from "../api/vouchersApi";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+import { buildApiUrl } from "../api/client";
 
 function fmt(n) {
   if (n == null) return "0";
@@ -37,6 +36,7 @@ export default function VouchersList() {
   });
 
   const [created, setCreated] = useState(null);
+  const [copyStatus, setCopyStatus] = useState("");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
 
@@ -48,7 +48,7 @@ export default function VouchersList() {
       setVouchers(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
-      setError(e?.response?.data?.error || "Failed to load vouchers.");
+      setError(e?.response?.data?.error || e?.message || "Failed to load vouchers.");
     } finally {
       setLoading(false);
     }
@@ -99,8 +99,20 @@ export default function VouchersList() {
       await load();
     } catch (e) {
       console.error(e);
-      setError(e?.response?.data?.error || "Failed to create voucher.");
+      setError(e?.response?.data?.error || e?.message || "Failed to create voucher.");
     }
+  }
+
+  async function copyToClipboard(value, label) {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(String(value));
+      setCopyStatus(`${label} copied.`);
+    } catch (err) {
+      console.error(err);
+      setCopyStatus("Copy failed.");
+    }
+    setTimeout(() => setCopyStatus(""), 2000);
   }
 
   const filtered = useMemo(() => {
@@ -194,16 +206,38 @@ export default function VouchersList() {
               <div>
                 <div className="stat-label">User Code</div>
                 <div className="stat-value">{created.userCode}</div>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => copyToClipboard(created.userCode, "User code")}
+                >
+                  Copy
+                </button>
               </div>
               <div>
                 <div className="stat-label">PIN</div>
                 <div className="stat-value">{created.pin}</div>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => copyToClipboard(created.pin, "PIN")}
+                >
+                  Copy
+                </button>
               </div>
               <div>
                 <div className="stat-label">Voucher Code</div>
                 <div className="stat-value">{created.voucher.code}</div>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => copyToClipboard(created.voucher.code, "Voucher code")}
+                >
+                  Copy
+                </button>
               </div>
             </div>
+            {copyStatus && <div className="hint" style={{ marginTop: 8 }}>{copyStatus}</div>}
 
             {created.qr?.path && (
               <div style={{ marginTop: 16 }}>
@@ -211,10 +245,21 @@ export default function VouchersList() {
                   QR Code
                 </div>
                 <img
-                  src={`${API_BASE_URL}/${created.qr.path}`}
+                  src={buildApiUrl(created.qr.path)}
                   alt="Voucher QR"
                   style={{ width: 180, height: 180, borderRadius: 14, border: "1px solid rgba(255,255,255,0.12)" }}
                 />
+                <div style={{ marginTop: 8 }}>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() =>
+                      copyToClipboard(buildApiUrl(created.qr.path), "QR url")
+                    }
+                  >
+                    Copy QR URL
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -294,7 +339,7 @@ export default function VouchersList() {
                       {qrPath ? (
                         <a
                           className="tag tag-blue"
-                          href={`${API_BASE_URL}/${qrPath}`}
+                          href={buildApiUrl(qrPath)}
                           target="_blank"
                           rel="noreferrer"
                         >

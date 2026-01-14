@@ -21,3 +21,13 @@ If you are developing a production application, we recommend using TypeScript wi
 Admin analytics and safety dashboards read from the backend admin endpoints. Telemetry is
 recorded server-side in the canonical `ledger_events` stream; the UI does not emit duplicate
 telemetry events.
+
+## Local development
+
+1) `npm i`
+2) Set `VITE_API_BASE_URL` (see `.env.example`)
+3) `npm run dev`
+
+## Deploy configuration
+
+Set `VITE_API_BASE_URL` to your backend base URL (example: `https://playtimeusa-backend-v2.onrender.com`).

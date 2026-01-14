@@ -11,23 +11,60 @@ export function StaffAuthProvider({ children }) {
   const [loading, setLoading] = useState(true); // session bootstrap
   const [error, setError] = useState("");
 
-  // Boot session from localStorage on first mount
-  useEffect(() => {
-    try {
-      const savedToken = localStorage.getItem("ptu_staff_token");
-      const savedStaff = localStorage.getItem("ptu_staff_payload");
+  function clearSession() {
+    setStaff(null);
+    setToken(null);
+    setError("");
+    localStorage.removeItem("ptu_staff_token");
+    localStorage.removeItem("ptu_staff_payload");
+    localStorage.removeItem("ptu_tenant_id");
+  }
 
-      if (savedToken && savedStaff) {
-        const parsedStaff = JSON.parse(savedStaff);
-        setToken(savedToken);
-        setStaff(parsedStaff);
-        api.defaults.headers.common.Authorization = `Bearer ${savedToken}`;
+  // Boot session from localStorage on first mount + validate token
+  useEffect(() => {
+    let active = true;
+
+    async function bootstrap() {
+      try {
+        const savedToken = localStorage.getItem("ptu_staff_token");
+        const savedStaff = localStorage.getItem("ptu_staff_payload");
+
+        if (savedToken && active) {
+          setToken(savedToken);
+        }
+
+        if (savedToken && savedStaff) {
+          const parsedStaff = JSON.parse(savedStaff);
+          if (active) {
+            setStaff(parsedStaff);
+          }
+        }
+
+        if (savedToken) {
+          const res = await api.get("/api/v1/staff/me");
+          const staffPayload = res.data?.staff;
+          if (!staffPayload) {
+            throw new Error("Invalid session");
+          }
+          if (active) {
+            setStaff(staffPayload);
+            localStorage.setItem("ptu_staff_payload", JSON.stringify(staffPayload));
+          }
+        }
+      } catch (e) {
+        console.error("[StaffAuth] failed to restore session:", e);
+        if (active) {
+          clearSession();
+        }
+      } finally {
+        if (active) setLoading(false);
       }
-    } catch (e) {
-      console.error("[StaffAuth] failed to restore session:", e);
-    } finally {
-      setLoading(false);
     }
+
+    bootstrap();
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function login({ username, password, tenantId = null }) {
@@ -54,12 +91,15 @@ export function StaffAuthProvider({ children }) {
       if (tenantId) localStorage.setItem("ptu_tenant_id", String(tenantId));
       else localStorage.removeItem("ptu_tenant_id");
 
-      api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-
       return true;
     } catch (err) {
       console.error("[StaffAuth] login error:", err);
-      setError("Invalid username or password");
+      if (err?.response?.status === 401) {
+        setError("Invalid username or password");
+      } else {
+        const message = err?.response?.data?.error || err?.message || "";
+        setError(message || "Login failed");
+      }
       return false;
     }
   }
@@ -70,13 +110,7 @@ export function StaffAuthProvider({ children }) {
     } catch {
       // ignore logout errors
     }
-    setStaff(null);
-    setToken(null);
-    setError("");
-    localStorage.removeItem("ptu_staff_token");
-    localStorage.removeItem("ptu_staff_payload");
-    localStorage.removeItem("ptu_tenant_id");
-    delete api.defaults.headers.common.Authorization;
+    clearSession();
   }
 
   const value = {
