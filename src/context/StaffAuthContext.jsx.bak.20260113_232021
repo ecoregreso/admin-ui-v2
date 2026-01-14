@@ -2,7 +2,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/client";
-import { getTenantConfig } from "../api/configApi";
 
 const StaffAuthContext = createContext(null);
 
@@ -11,39 +10,14 @@ export function StaffAuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true); // session bootstrap
   const [error, setError] = useState("");
-  const [config, setConfig] = useState(null);
-  const [configLoading, setConfigLoading] = useState(false);
 
   function clearSession() {
     setStaff(null);
     setToken(null);
     setError("");
-    setConfig(null);
-    setConfigLoading(false);
     localStorage.removeItem("ptu_staff_token");
     localStorage.removeItem("ptu_staff_payload");
     localStorage.removeItem("ptu_tenant_id");
-  }
-
-  async function loadConfig(tenantIdOverride = null) {
-    setConfigLoading(true);
-    try {
-      const data = await getTenantConfig(tenantIdOverride || undefined);
-      if (data && typeof data === "object") {
-        const normalized = {
-          ...data,
-          effective: data.effective || data.config || data,
-        };
-        setConfig(normalized);
-      } else {
-        setConfig(null);
-      }
-    } catch (err) {
-      console.error("[StaffAuth] config load error:", err);
-      setConfig(null);
-    } finally {
-      setConfigLoading(false);
-    }
   }
 
   // Boot session from localStorage on first mount + validate token
@@ -75,9 +49,6 @@ export function StaffAuthProvider({ children }) {
           if (active) {
             setStaff(staffPayload);
             localStorage.setItem("ptu_staff_payload", JSON.stringify(staffPayload));
-          }
-          if (active) {
-            await loadConfig();
           }
         }
       } catch (e) {
@@ -120,7 +91,6 @@ export function StaffAuthProvider({ children }) {
       if (tenantId) localStorage.setItem("ptu_tenant_id", String(tenantId));
       else localStorage.removeItem("ptu_tenant_id");
 
-      await loadConfig(tenantId);
       return true;
     } catch (err) {
       console.error("[StaffAuth] login error:", err);
@@ -148,12 +118,9 @@ export function StaffAuthProvider({ children }) {
     token,
     loading, // session loading (used by PrivateRoute)
     error,
-    config,
-    configLoading,
     isAuthenticated: !!staff && !!token,
     login,
     logout,
-    refreshConfig: loadConfig,
   };
 
   return (

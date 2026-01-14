@@ -24,17 +24,9 @@ function NavItem({ to, label, disabled }) {
 }
 
 export default function AdminLayout() {
-  const { staff, logout, config } = useStaffAuth();
+  const { staff, logout } = useStaffAuth();
   const perms = staff?.permissions || [];
   const can = (perm) => perms.includes(perm);
-  const isOwner = staff?.role === "owner";
-  const effectiveConfig = config?.effective || {};
-  const featureFlags = {
-    vouchers: isOwner || effectiveConfig.vouchersEnabled !== false,
-    purchaseOrders: isOwner || effectiveConfig.purchaseOrdersEnabled !== false,
-    messages: isOwner || effectiveConfig.messagingEnabled !== false,
-  };
-  const maintenanceMode = !isOwner && effectiveConfig.maintenanceMode === true;
 
   const sections = [
     {
@@ -45,9 +37,9 @@ export default function AdminLayout() {
       title: "Operations",
       items: [
         { to: "/players", label: "Players", perms: ["player:read"] },
-        { to: "/vouchers", label: "Vouchers", perms: ["voucher:read"], feature: "vouchers" },
+        { to: "/vouchers", label: "Vouchers", perms: ["voucher:read"] },
         { to: "/reports", label: "Reports", perms: ["finance:read"] },
-        { to: "/messages", label: "Messages", perms: ["player:read"], feature: "messages" },
+        { to: "/messages", label: "Messages", perms: ["player:read"] },
       ],
     },
     {
@@ -72,7 +64,7 @@ export default function AdminLayout() {
       items: [
         { to: "/transactions", label: "Transactions", perms: ["finance:read"] },
         { to: "/finance-queue", label: "Finance Queue", perms: ["finance:write", "finance:read"] },
-        { to: "/purchase-orders", label: "Funcoin Orders", perms: ["finance:read"], feature: "purchaseOrders" },
+        { to: "/purchase-orders", label: "Funcoin Orders", perms: ["finance:read"] },
       ],
     },
     {
@@ -116,13 +108,12 @@ export default function AdminLayout() {
               {section.items.map((item) => {
                 const required = item.perms || [];
                 const allowed = required.length === 0 ? true : required.some(can);
-                const featureAllowed = item.feature ? featureFlags[item.feature] !== false : true;
                 return (
                   <NavItem
                     key={item.to}
                     to={item.to}
                     label={item.label}
-                    disabled={!allowed || !featureAllowed}
+                    disabled={!allowed}
                   />
                 );
               })}
@@ -158,11 +149,6 @@ export default function AdminLayout() {
             <span className="status-pill live">
               <span className="status-dot" /> Secure
             </span>
-            {maintenanceMode && (
-              <span className="status-pill status-error">
-                <span className="status-dot" /> Maintenance Mode
-              </span>
-            )}
           </div>
           <div className="status-pill">Secure Session</div>
         </header>

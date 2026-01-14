@@ -14,12 +14,11 @@ import {
 } from "../api/purchaseOrdersApi.js";
 
 export default function PurchaseOrders() {
-  const { staff, config, configLoading } = useStaffAuth();
+  const { staff } = useStaffAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const effectiveConfig = config?.effective || {};
 
   const [funAmount, setFunAmount] = useState("");
   const [btcAmount, setBtcAmount] = useState("");
@@ -70,14 +69,6 @@ export default function PurchaseOrders() {
     [staff]
   );
   const isOwner = useMemo(() => staff?.role === "owner", [staff]);
-  const maintenanceMode = effectiveConfig.maintenanceMode === true;
-  const purchaseOrdersEnabled = effectiveConfig.purchaseOrdersEnabled !== false;
-  const isBlocked = !isOwner && (maintenanceMode || !purchaseOrdersEnabled);
-  const blockedMessage = useMemo(() => {
-    if (!isBlocked) return "";
-    if (maintenanceMode) return "System is in maintenance mode.";
-    return "Purchase orders are disabled for this tenant.";
-  }, [isBlocked, maintenanceMode]);
   const canPlaceOrder = useMemo(
     () => staff?.role === "agent" || staff?.role === "distributor" || staff?.role === "owner",
     [staff]
@@ -125,33 +116,15 @@ export default function PurchaseOrders() {
   }
 
   useEffect(() => {
-    if (configLoading || isBlocked) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [configLoading, isBlocked]);
-
-  if (!configLoading && isBlocked) {
-    return (
-      <div className="page">
-        <div className="panel">
-          <div className="panel-header">
-            <h2 className="panel-title">Funcoin Orders</h2>
-          </div>
-          <div className="alert">{blockedMessage}</div>
-        </div>
-      </div>
-    );
-  }
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setSuccess("");
 
-    if (isBlocked) {
-      setError(blockedMessage);
-      return;
-    }
     if (!canPlaceOrder) {
       setError("Only agents, distributors, or owners can place funcoin orders.");
       return;

@@ -24,18 +24,8 @@ export default function VouchersList() {
   const [amount, setAmount] = useState("");
   const [bonusAmount, setBonusAmount] = useState("");
   const [currency, setCurrency] = useState("FUN");
-  const { staff, config, configLoading } = useStaffAuth();
-  const effectiveConfig = config?.effective || {};
+  const { staff } = useStaffAuth();
   const isOwner = staff?.role === "owner";
-  const canCreate = (staff?.permissions || []).includes("voucher:write");
-  const vouchersEnabled = effectiveConfig.vouchersEnabled !== false;
-  const maintenanceMode = effectiveConfig.maintenanceMode === true;
-  const isBlocked = !isOwner && (maintenanceMode || !vouchersEnabled);
-  const blockedMessage = useMemo(() => {
-    if (!isBlocked) return "";
-    if (maintenanceMode) return "System is in maintenance mode.";
-    return "Vouchers are disabled for this tenant.";
-  }, [isBlocked, maintenanceMode]);
   const [ownerTenantId, setOwnerTenantId] = useState(() => {
     if (typeof window === "undefined") return "";
     try {
@@ -65,14 +55,8 @@ export default function VouchersList() {
   }
 
   useEffect(() => {
-    if (configLoading) return;
-    if (isBlocked) {
-      setVouchers([]);
-      setError(blockedMessage);
-      return;
-    }
     load();
-  }, [configLoading, isBlocked, blockedMessage]);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -91,13 +75,6 @@ export default function VouchersList() {
     e.preventDefault();
     setError("");
     setCreated(null);
-
-    if (isBlocked) {
-      return setError(blockedMessage);
-    }
-    if (!canCreate) {
-      return setError("You do not have permission to create vouchers.");
-    }
 
     const a = Number(amount);
     const b = Number(bonusAmount || 0);
@@ -160,9 +137,6 @@ export default function VouchersList() {
         </div>
 
         {error && <div className="alert">{error}</div>}
-        {!error && !isBlocked && !canCreate && (
-          <div className="alert">You do not have permission to create vouchers.</div>
-        )}
 
         <form className="form-grid" onSubmit={onCreate}>
           <div className="field">
@@ -217,7 +191,7 @@ export default function VouchersList() {
           )}
 
           <div className="field" style={{ alignSelf: "end" }}>
-            <button className="btn btn-primary" type="submit" disabled={loading || isBlocked || !canCreate}>
+            <button className="btn btn-primary" type="submit" disabled={loading}>
               Create Voucher
             </button>
           </div>
