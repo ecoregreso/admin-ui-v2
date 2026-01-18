@@ -40,12 +40,37 @@ function defaultFilters() {
   const today = new Date();
   const from = new Date();
   from.setDate(today.getDate() - 29);
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Los_Angeles";
   return {
     from: from.toISOString().slice(0, 10),
     to: today.toISOString().slice(0, 10),
     bucket: "day",
-    timezone: "America/Los_Angeles",
+    timezone: tz,
+    gameKey: "",
+    agentId: "",
+    cashierId: "",
+    provider: "",
+    region: "",
   };
+}
+
+function normalizeFilters(filters) {
+  const out = { ...filters };
+  const normalizeDate = (value) => {
+    if (!value) return "";
+    if (value instanceof Date) return value.toISOString().slice(0, 10);
+    return String(value);
+  };
+  out.from = normalizeDate(filters.from);
+  out.to = normalizeDate(filters.to);
+  out.bucket = filters.bucket || "day";
+  out.timezone = filters.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Los_Angeles";
+  out.agentId = filters.agentId?.trim?.() || undefined;
+  out.cashierId = filters.cashierId?.trim?.() || undefined;
+  out.gameKey = filters.gameKey?.trim?.() || undefined;
+  out.provider = filters.provider?.trim?.() || undefined;
+  out.region = filters.region?.trim?.() || undefined;
+  return out;
 }
 
 export default function AnalyticsPlayers() {
@@ -65,7 +90,7 @@ export default function AnalyticsPlayers() {
     setError("");
     setWarnings([]);
     try {
-      const res = await fetchAnalyticsPlayers(nextFilters || filtersRef.current);
+      const res = await fetchAnalyticsPlayers(normalizeFilters(nextFilters || filtersRef.current));
       if (!res.ok) {
         setError(res.error || "Failed to load player analytics");
       } else {
@@ -80,7 +105,7 @@ export default function AnalyticsPlayers() {
   }, []);
 
   useEffect(() => {
-    load();
+    load(normalizeFilters(filtersRef.current));
   }, [load]);
 
   const activeSeries = data?.activeUsers?.series ?? EMPTY_ARRAY;
@@ -121,7 +146,7 @@ export default function AnalyticsPlayers() {
       <AnalyticsFilters
         filters={filters}
         onChange={setFilters}
-        onApply={load}
+        onApply={() => load(filters)}
         loading={loading}
         showAdvanced
       />

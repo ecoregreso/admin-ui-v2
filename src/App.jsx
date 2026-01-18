@@ -22,6 +22,7 @@ import AnalyticsOps from "./pages/analytics/AnalyticsOps.jsx";
 import AnalyticsFunnel from "./pages/analytics/AnalyticsFunnel.jsx";
 import AnalyticsAudit from "./pages/analytics/AnalyticsAudit.jsx";
 import AnalyticsLtv from "./pages/analytics/AnalyticsLtv.jsx";
+import Jackpots from "./pages/analytics/Jackpots.jsx";
 import AdminLayout from "./layout/AdminLayout.jsx";
 import { useStaffAuth } from "./context/StaffAuthContext.jsx";
 
@@ -181,6 +182,14 @@ export default function App() {
             element={
               <RequirePermission permission="finance:read">
                 <AnalyticsLtv />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="analytics/jackpots"
+            element={
+              <RequirePermission permission="finance:read">
+                <Jackpots />
               </RequirePermission>
             }
           />

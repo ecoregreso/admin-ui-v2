@@ -24,8 +24,23 @@ export async function fetchAnalyticsRevenue(params) {
   return res.data;
 }
 
+const normalizeParams = (params = {}) => {
+  const out = {};
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") return;
+    if (value instanceof Date) {
+      out[key] = value.toISOString().slice(0, 10);
+      return;
+    }
+    out[key] = value;
+  });
+  return normalizeRangeParams(out);
+};
+
 export async function fetchAnalyticsPlayers(params) {
-  const res = await api.get("/api/v1/admin/analytics/players", { params });
+  const res = await api.get("/api/v1/admin/analytics/players", {
+    params: normalizeParams(params),
+  });
   return res.data;
 }
 
@@ -51,6 +66,11 @@ export async function fetchAnalyticsLtv(params) {
 
 export async function fetchAnalyticsAttribution(params) {
   const res = await api.get("/api/v1/admin/analytics/attribution", { params });
+  return res.data;
+}
+
+export async function fetchJackpotsSummary(params) {
+  const res = await api.get("/api/v1/admin/jackpots/summary", { params });
   return res.data;
 }
 

@@ -65,6 +65,7 @@ export default function AdminLayout() {
         { to: "/analytics/funnel", label: "Funnel", perms: ["finance:read"] },
         { to: "/analytics/ltv", label: "LTV", perms: ["finance:read"] },
         { to: "/analytics/audit", label: "Audit", perms: ["finance:read"] },
+        { to: "/analytics/jackpots", label: "Jackpots", perms: ["finance:read"] },
       ],
     },
     {
