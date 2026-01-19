@@ -2,7 +2,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import InfoTooltip from "../components/InfoTooltip.jsx";
 import { runSecurityProbes, fetchSecurityStatus } from "../api/securityApi.js";
 
-const DEFAULT_SCENARIOS = ["sql_injection", "xss_payload", "dir_traversal", "user_agent_switch", "double_login"];
+const DEFAULT_SCENARIOS = [
+  "sql_injection",
+  "xss_payload",
+  "dir_traversal",
+  "user_agent_switch",
+  "double_login",
+  "ssrf_block",
+  "token_tamper",
+];
 
 function randomFingerprint() {
   return `fp-${Math.random().toString(16).slice(2, 10)}-${Date.now().toString(16).slice(-6)}`;
@@ -31,6 +39,7 @@ export default function SecurityLab() {
   const [selected, setSelected] = useState(new Set(DEFAULT_SCENARIOS));
   const [fingerprint, setFingerprint] = useState(() => randomFingerprint());
   const [overrideUa, setOverrideUa] = useState("");
+  const [targetUrl, setTargetUrl] = useState("http://127.0.0.1:80/health");
   const [results, setResults] = useState([]);
   const [session, setSession] = useState(null);
   const [events, setEvents] = useState([]);
@@ -84,6 +93,7 @@ export default function SecurityLab() {
           scenarios: probes,
           fingerprint: fp,
           userAgent: ua || undefined,
+          url: targetUrl,
         },
         headers
       );
@@ -176,6 +186,16 @@ export default function SecurityLab() {
                 </button>
               </div>
             </div>
+
+            <div className="field">
+              <label>SSRF Target URL</label>
+              <input
+                className="input"
+                value={targetUrl}
+                onChange={(e) => setTargetUrl(e.target.value)}
+                placeholder="http://127.0.0.1/health"
+              />
+            </div>
           </div>
 
           <div className="stack">
@@ -195,6 +215,8 @@ export default function SecurityLab() {
                 onChange={toggleScenario}
               />
               <ScenarioToggle label="Double Login" value="double_login" checked={selected.has("double_login")} onChange={toggleScenario} />
+              <ScenarioToggle label="SSRF Block" value="ssrf_block" checked={selected.has("ssrf_block")} onChange={toggleScenario} />
+              <ScenarioToggle label="Token Tamper" value="token_tamper" checked={selected.has("token_tamper")} onChange={toggleScenario} />
             </div>
 
             <button className="btn" type="button" onClick={() => handleRun()} disabled={loading}>
