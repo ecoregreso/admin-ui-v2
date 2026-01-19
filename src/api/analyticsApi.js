@@ -74,6 +74,16 @@ export async function fetchJackpotsSummary(params) {
   return res.data;
 }
 
+export async function updateJackpotTarget(jackpotId, payload) {
+  const res = await api.patch(`/api/v1/admin/jackpots/${jackpotId}/target`, payload);
+  return res.data;
+}
+
+export async function triggerJackpot(jackpotId, payload = {}) {
+  const res = await api.post(`/api/v1/admin/jackpots/${jackpotId}/trigger`, payload);
+  return res.data;
+}
+
 export async function runAnalyticsAudit(params) {
   const res = await api.get("/api/v1/admin/audit/run", {
     params: normalizeRangeParams(params),
