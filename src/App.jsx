@@ -23,6 +23,7 @@ import AnalyticsFunnel from "./pages/analytics/AnalyticsFunnel.jsx";
 import AnalyticsAudit from "./pages/analytics/AnalyticsAudit.jsx";
 import AnalyticsLtv from "./pages/analytics/AnalyticsLtv.jsx";
 import Jackpots from "./pages/analytics/Jackpots.jsx";
+import SecurityLab from "./pages/SecurityLab.jsx";
 import AdminLayout from "./layout/AdminLayout.jsx";
 import { useStaffAuth } from "./context/StaffAuthContext.jsx";
 
@@ -262,6 +263,14 @@ export default function App() {
             element={
               <RequirePermission permission="tenant:manage">
                 <Maintenance />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="security/lab"
+            element={
+              <RequirePermission permission="staff:manage">
+                <SecurityLab />
               </RequirePermission>
             }
           />
