@@ -45,3 +45,8 @@ export async function getPlayerSessions(id, { limit = 200 } = {}) {
   });
   return res.data;
 }
+
+export async function deletePlayer(id) {
+  const res = await api.delete(`/api/v1/admin/players/${id}`);
+  return res.data;
+}

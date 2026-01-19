@@ -49,6 +49,22 @@ function displayPermissions(staff) {
   return ROLE_DEFAULTS[staff.role] || [];
 }
 
+function statusDot(status) {
+  const cls =
+    status === "live"
+      ? "status-dot green"
+      : status === "active"
+        ? "status-dot yellow"
+        : "status-dot red";
+  const label = status === "live" ? "Live" : status === "active" ? "Active" : "Deprecated";
+  return (
+    <span className="status-indicator">
+      <span className={cls} />
+      {label}
+    </span>
+  );
+}
+
 export default function StaffList() {
   const [staff, setStaff] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -215,6 +231,10 @@ export default function StaffList() {
     );
   }
 
+  const liveStaff = staff.filter((s) => s.liveStatus === "live");
+  const activeStaff = staff.filter((s) => s.liveStatus === "active");
+  const deprecatedStaff = staff.filter((s) => s.liveStatus === "deprecated" || !s.isActive);
+
   return (
     <div className="page">
       <div className="panel">
@@ -238,8 +258,8 @@ export default function StaffList() {
         <div className="panel">
           <div className="panel-header">
             <div>
-              <h3 className="panel-title">Staff Directory</h3>
-              <p className="panel-subtitle">Select a staff member to edit access.</p>
+              <h3 className="panel-title">Live Staff</h3>
+              <p className="panel-subtitle">Currently logged in.</p>
             </div>
           </div>
           <div className="table-wrap">
@@ -250,11 +270,12 @@ export default function StaffList() {
                   <th>Username</th>
                   <th>Email</th>
                   <th>Role</th>
-                  <th>Active</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {staff.map((s) => (
+                {liveStaff.map((s) => (
                   <tr
                     key={s.id}
                     onClick={() => setSelectedId(s.id)}
@@ -265,13 +286,24 @@ export default function StaffList() {
                     <td>{s.username}</td>
                     <td>{s.email || "-"}</td>
                     <td>{s.role}</td>
-                    <td>{s.isActive ? "active" : "inactive"}</td>
+                    <td>{statusDot(s.liveStatus || (s.isActive ? "active" : "deprecated"))}</td>
+                    <td>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleActive(s);
+                        }}
+                      >
+                        {s.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                    </td>
                   </tr>
                 ))}
-                {!staff.length && !loading && (
+                {!liveStaff.length && !loading && (
                   <tr>
-                    <td colSpan={5} className="empty">
-                      No staff users found.
+                    <td colSpan={6} className="empty">
+                      No live staff users found.
                     </td>
                   </tr>
                 )}
@@ -296,7 +328,10 @@ export default function StaffList() {
                 <div className="grid-3">
                   <div>
                     <div className="stat-label">Username</div>
-                    <div className="stat-value">{selectedStaff.username}</div>
+                    <div className="stat-value">
+                      {selectedStaff.username}{" "}
+                      {statusDot(selectedStaff.liveStatus || (selectedStaff.isActive ? "active" : "deprecated"))}
+                    </div>
                   </div>
                   <div>
                     <div className="stat-label">Email</div>
@@ -455,6 +490,118 @@ export default function StaffList() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid-2" style={{ marginTop: 16 }}>
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h3 className="panel-title">Active Staff</h3>
+              <p className="panel-subtitle">Employed but not currently live.</p>
+            </div>
+          </div>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeStaff.map((s) => (
+                  <tr
+                    key={s.id}
+                    onClick={() => setSelectedId(s.id)}
+                    className={s.id === selectedId ? "table-row-active" : undefined}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>{s.id}</td>
+                    <td>{s.username}</td>
+                    <td>{s.role}</td>
+                    <td>{statusDot(s.liveStatus || (s.isActive ? "active" : "deprecated"))}</td>
+                    <td>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleActive(s);
+                        }}
+                      >
+                        {s.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {!activeStaff.length && !loading && (
+                  <tr>
+                    <td colSpan={5} className="empty">
+                      No active staff users.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h3 className="panel-title">Deprecated Users</h3>
+              <p className="panel-subtitle">Terminated staff.</p>
+            </div>
+          </div>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deprecatedStaff.map((s) => (
+                  <tr
+                    key={s.id}
+                    onClick={() => setSelectedId(s.id)}
+                    className={s.id === selectedId ? "table-row-active" : undefined}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>{s.id}</td>
+                    <td>{s.username}</td>
+                    <td>{s.role}</td>
+                    <td>{statusDot(s.liveStatus || "deprecated")}</td>
+                    <td>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleActive(s);
+                        }}
+                      >
+                        Activate
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {!deprecatedStaff.length && !loading && (
+                  <tr>
+                    <td colSpan={5} className="empty">
+                      No deprecated staff.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

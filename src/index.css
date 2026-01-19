@@ -873,6 +873,37 @@ textarea {
   accent-color: var(--neon-blue);
 }
 
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.status-dot.green {
+  background: #2bd67b;
+  box-shadow: 0 0 8px rgba(43, 214, 123, 0.6);
+}
+
+.status-dot.yellow {
+  background: #f6c453;
+  box-shadow: 0 0 8px rgba(246, 196, 83, 0.6);
+}
+
+.status-dot.red {
+  background: #ff304f;
+  box-shadow: 0 0 8px rgba(255, 48, 79, 0.6);
+}
+
 .empty {
   padding: 16px;
   text-align: center;
