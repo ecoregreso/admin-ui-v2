@@ -37,73 +37,127 @@ function formatFun(cents) {
   });
 }
 
-function ConfettiOverlay({ active }) {
-  const canvasRef = useRef(null);
+function MetalConfetti({ active }) {
+  const mountRef = useRef(null);
   const rafRef = useRef(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !active) return;
-    const ctx = canvas.getContext("2d");
+    if (!active) return undefined;
+    let renderer;
+    let scene;
+    let camera;
     let particles = [];
+    let THREE = null;
+    let stopped = false;
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
+    const init = async () => {
+      try {
+        THREE = await import("three");
+      } catch (err) {
+        console.error("[Confetti] failed to load three:", err);
+        return;
+      }
+      if (!mountRef.current) return;
 
-    const createParticles = () => {
-      const count = 160;
-      const colors = ["#27d9ff", "#ff304f", "#f6c453", "#9f7aea", "#2bd67b"];
-      particles = Array.from({ length: count }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height - canvas.height,
-        size: 4 + Math.random() * 4,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        speed: 2 + Math.random() * 3,
-        drift: -1 + Math.random() * 2,
-        rotation: Math.random() * Math.PI,
-      }));
-    };
+      const { clientWidth, clientHeight } = mountRef.current.parentElement || document.body;
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(clientWidth, clientHeight);
+      renderer.setPixelRatio(window.devicePixelRatio || 1);
+      mountRef.current.innerHTML = "";
+      mountRef.current.appendChild(renderer.domElement);
 
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach((p) => {
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rotation);
-        ctx.fillStyle = p.color;
-        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
-        ctx.restore();
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(60, clientWidth / clientHeight, 1, 1000);
+      camera.position.z = 80;
 
-        p.y += p.speed;
-        p.x += p.drift;
-        p.rotation += 0.05;
-        if (p.y > canvas.height) {
-          p.y = -10;
-          p.x = Math.random() * canvas.width;
-        }
+      const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambient);
+      const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+      dir.position.set(0, 50, 50);
+      scene.add(dir);
+
+      const geometry = new THREE.BoxGeometry(2, 4, 0.6);
+      const colors = [0xd4af37, 0xc0c0c0, 0xffd700, 0xb08d57, 0x8ec5ff];
+      const makeMat = (color) =>
+        new THREE.MeshPhongMaterial({
+          color,
+          shininess: 150,
+          specular: new THREE.Color(0xffffff),
+          reflectivity: 0.9,
+        });
+
+      particles = Array.from({ length: 200 }, () => {
+        const mat = makeMat(colors[Math.floor(Math.random() * colors.length)]);
+        const mesh = new THREE.Mesh(geometry, mat);
+        mesh.position.set(
+          (Math.random() - 0.5) * 120,
+          Math.random() * 120,
+          (Math.random() - 0.5) * 40
+        );
+        mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+        mesh.userData = {
+          vy: 0.8 + Math.random() * 1.8,
+          vrx: Math.random() * 0.05,
+          vry: Math.random() * 0.05,
+        };
+        scene.add(mesh);
+        return mesh;
       });
-      rafRef.current = requestAnimationFrame(draw);
+
+      const animate = () => {
+        if (stopped) return;
+        particles.forEach((p) => {
+          p.position.y -= p.userData.vy;
+          p.rotation.x += p.userData.vrx;
+          p.rotation.y += p.userData.vry;
+          if (p.position.y < -80) {
+            p.position.y = 80;
+            p.position.x = (Math.random() - 0.5) * 120;
+          }
+        });
+        renderer.render(scene, camera);
+        rafRef.current = requestAnimationFrame(animate);
+      };
+      animate();
+
+      const onResize = () => {
+        const w = mountRef.current?.parentElement?.clientWidth || window.innerWidth;
+        const h = mountRef.current?.parentElement?.clientHeight || window.innerHeight;
+        renderer.setSize(w, h);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      };
+      window.addEventListener("resize", onResize);
+
+      return () => {
+        window.removeEventListener("resize", onResize);
+      };
     };
 
-    createParticles();
-    draw();
+    const cleanupScene = () => {
+      stopped = true;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (scene) {
+        particles.forEach((p) => {
+          p.geometry?.dispose?.();
+          p.material?.dispose?.();
+          scene.remove(p);
+        });
+      }
+      if (renderer) {
+        renderer.dispose();
+        renderer.domElement?.remove();
+      }
+    };
+
+    init();
 
     return () => {
-      window.removeEventListener("resize", resize);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      cleanupScene();
     };
   }, [active]);
 
-  if (!active) return null;
-  return (
-    <div className="confetti-overlay">
-      <canvas ref={canvasRef} />
-    </div>
-  );
+  return <div className="confetti-overlay" ref={mountRef} />;
 }
 
 function formatDuration(ms) {
@@ -427,7 +481,7 @@ export default function Jackpots() {
     <div className="page">
       {triggerModal.open && (
         <div className="modal-backdrop">
-          <ConfettiOverlay active />
+          <MetalConfetti active />
           <div className="modal">
             <div className="modal-header">
               <div>
