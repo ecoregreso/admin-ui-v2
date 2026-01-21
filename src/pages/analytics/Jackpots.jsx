@@ -346,7 +346,8 @@ export default function Jackpots() {
     open: false,
     jackpotId: null,
     payout: "",
-    playerId: "",
+    playerLookup: "",
+    voucherCode: "",
     triggeredBy: "admin-ui",
   });
 
@@ -440,7 +441,8 @@ export default function Jackpots() {
       }
       payload.payoutCents = Math.round(payoutFun * 100);
     }
-    if (form.playerId) payload.playerId = form.playerId.trim();
+    if (form.playerLookup) payload.playerLookup = form.playerLookup.trim();
+    if (form.voucherCode) payload.voucherCode = form.voucherCode.trim();
     if (form.triggeredBy) payload.triggeredBy = form.triggeredBy;
 
     setActionState((prev) => ({ ...prev, [id]: { ...(prev[id] || {}), triggering: true, error: "", success: "" } }));
@@ -450,7 +452,7 @@ export default function Jackpots() {
         ...prev,
         [id]: { ...(prev[id] || {}), triggering: false, success: "Triggered" },
       }));
-      setTriggerModal({ open: false, jackpotId: null, payout: "", playerId: "", triggeredBy: "admin-ui" });
+      setTriggerModal({ open: false, jackpotId: null, payout: "", playerLookup: "", voucherCode: "", triggeredBy: "admin-ui" });
       await load();
     } catch (err) {
       setActionState((prev) => ({
@@ -488,18 +490,27 @@ export default function Jackpots() {
                 <div className="panel-title">Trigger Jackpot Win</div>
                 <div className="panel-subtitle">Select player and optional payout override.</div>
               </div>
-              <button className="btn btn-secondary" onClick={() => setTriggerModal({ open: false, jackpotId: null, payout: "", playerId: "", triggeredBy: "admin-ui" })}>
+              <button className="btn btn-secondary" onClick={() => setTriggerModal({ open: false, jackpotId: null, payout: "", playerLookup: "", voucherCode: "", triggeredBy: "admin-ui" })}>
                 Close
               </button>
             </div>
             <div className="form-grid">
               <div className="field">
-                <label>Player ID (optional)</label>
+                <label>Player ID / UserCode (optional)</label>
                 <input
                   className="input"
-                  value={triggerModal.playerId}
-                  onChange={(e) => setTriggerModal((prev) => ({ ...prev, playerId: e.target.value }))}
-                  placeholder="UUID of player to credit"
+                  value={triggerModal.playerLookup}
+                  onChange={(e) => setTriggerModal((prev) => ({ ...prev, playerLookup: e.target.value }))}
+                  placeholder="Player ID or userCode (6-digit)"
+                />
+              </div>
+              <div className="field">
+                <label>Voucher Code (optional)</label>
+                <input
+                  className="input"
+                  value={triggerModal.voucherCode}
+                  onChange={(e) => setTriggerModal((prev) => ({ ...prev, voucherCode: e.target.value }))}
+                  placeholder="Voucher code to resolve player"
                 />
               </div>
               <div className="field">
@@ -567,7 +578,8 @@ export default function Jackpots() {
                 open: true,
                 jackpotId,
                 payout: actionState[jackpotId]?.payout || "",
-                playerId: actionState[jackpotId]?.playerId || "",
+                playerLookup: actionState[jackpotId]?.playerLookup || "",
+                voucherCode: actionState[jackpotId]?.voucherCode || "",
               }))
             }
             canManage={canManage}
