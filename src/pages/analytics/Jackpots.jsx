@@ -84,7 +84,7 @@ function ProgressBar({ value }) {
   );
 }
 
-function JackpotCard({ jp, form, onChangeField, onSaveTarget, onTrigger, canManage }) {
+function JackpotCard({ jp, form, onChangeField, onSaveTarget, onOpenTriggerModal, canManage }) {
   const metrics = jp.metrics || {};
   const growth = metrics.growth || {};
   const progressRaw = metrics.progressToTrigger ?? (jp.triggerCents ? jp.currentPotCents / jp.triggerCents : 0);
@@ -168,8 +168,8 @@ function JackpotCard({ jp, form, onChangeField, onSaveTarget, onTrigger, canMana
                 <button className="btn" onClick={() => onSaveTarget(jp.id)} disabled={action.saving}>
                   {action.saving ? "Saving…" : "Save target"}
                 </button>
-                <button className="btn" onClick={() => onTrigger(jp.id)} disabled={action.triggering}>
-                  {action.triggering ? "Triggering…" : "Trigger win"}
+                <button className="btn" onClick={() => onOpenTriggerModal(jp.id)} disabled={action.triggering}>
+                  Trigger win
                 </button>
                 {action.success && <span className="tag tag-blue">{action.success}</span>}
               </div>
@@ -219,6 +219,13 @@ export default function Jackpots() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [actionState, setActionState] = useState({});
+  const [triggerModal, setTriggerModal] = useState({
+    open: false,
+    jackpotId: null,
+    payout: "",
+    playerId: "",
+    triggeredBy: "admin-ui",
+  });
 
   const jackpots = data?.jackpots || [];
   const events = data?.events || [];
@@ -300,33 +307,34 @@ export default function Jackpots() {
   };
 
   const handleTrigger = async (id) => {
-    const form = actionState[id] || {};
+    const form = triggerModal.jackpotId === id ? triggerModal : actionState[id] || {};
     const payload = {};
     if (form.payout && form.payout !== "") {
       const payoutFun = parseFloat(form.payout);
       if (!Number.isFinite(payoutFun) || payoutFun <= 0) {
-        setActionState((prev) => ({
-          ...prev,
-          [id]: { ...(prev[id] || {}), error: "Enter a payout > 0 or leave blank", success: "" },
-        }));
+        setError("Enter a payout > 0 or leave blank.");
         return;
       }
       payload.payoutCents = Math.round(payoutFun * 100);
     }
+    if (form.playerId) payload.playerId = form.playerId.trim();
+    if (form.triggeredBy) payload.triggeredBy = form.triggeredBy;
 
     setActionState((prev) => ({ ...prev, [id]: { ...(prev[id] || {}), triggering: true, error: "", success: "" } }));
     try {
-      await triggerJackpot(id, { ...payload, triggeredBy: "admin-ui" });
+      await triggerJackpot(id, payload);
       setActionState((prev) => ({
         ...prev,
         [id]: { ...(prev[id] || {}), triggering: false, success: "Triggered" },
       }));
+      setTriggerModal({ open: false, jackpotId: null, payout: "", playerId: "", triggeredBy: "admin-ui" });
       await load();
     } catch (err) {
       setActionState((prev) => ({
         ...prev,
         [id]: { ...(prev[id] || {}), triggering: false, error: err.message || "Failed to trigger" },
       }));
+      setError(err.message || "Failed to trigger");
     }
   };
 
@@ -348,6 +356,67 @@ export default function Jackpots() {
 
   return (
     <div className="page">
+      {triggerModal.open && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <div className="modal-header">
+              <div>
+                <div className="panel-title">Trigger Jackpot Win</div>
+                <div className="panel-subtitle">Select player and optional payout override.</div>
+              </div>
+              <button className="btn btn-secondary" onClick={() => setTriggerModal({ open: false, jackpotId: null, payout: "", playerId: "", triggeredBy: "admin-ui" })}>
+                Close
+              </button>
+            </div>
+            <div className="form-grid">
+              <div className="field">
+                <label>Player ID (optional)</label>
+                <input
+                  className="input"
+                  value={triggerModal.playerId}
+                  onChange={(e) => setTriggerModal((prev) => ({ ...prev, playerId: e.target.value }))}
+                  placeholder="UUID of player to credit"
+                />
+              </div>
+              <div className="field">
+                <label>Payout (FUN, optional)</label>
+                <input
+                  className="input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={triggerModal.payout}
+                  onChange={(e) => setTriggerModal((prev) => ({ ...prev, payout: e.target.value }))}
+                  placeholder="Leave blank to use trigger"
+                />
+              </div>
+              <div className="field">
+                <label>Triggered By</label>
+                <input
+                  className="input"
+                  value={triggerModal.triggeredBy}
+                  onChange={(e) => setTriggerModal((prev) => ({ ...prev, triggeredBy: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="inline" style={{ marginTop: 12 }}>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  if (!triggerModal.jackpotId) {
+                    setError("No jackpot selected");
+                    return;
+                  }
+                  handleTrigger(triggerModal.jackpotId);
+                }}
+              >
+                Fire Jackpot
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="panel-header">
         <div className="panel-title-row">
           <h2 className="panel-title">Jackpots</h2>
@@ -368,7 +437,15 @@ export default function Jackpots() {
             form={actionState[jp.id]}
             onChangeField={handleFieldChange}
             onSaveTarget={handleSaveTarget}
-            onTrigger={handleTrigger}
+            onOpenTriggerModal={(jackpotId) =>
+              setTriggerModal((prev) => ({
+                ...prev,
+                open: true,
+                jackpotId,
+                payout: actionState[jackpotId]?.payout || "",
+                playerId: actionState[jackpotId]?.playerId || "",
+              }))
+            }
             canManage={canManage}
           />
         ))}
