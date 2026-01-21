@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -35,6 +35,75 @@ function formatFun(cents) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+function ConfettiOverlay({ active }) {
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !active) return;
+    const ctx = canvas.getContext("2d");
+    let particles = [];
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const createParticles = () => {
+      const count = 160;
+      const colors = ["#27d9ff", "#ff304f", "#f6c453", "#9f7aea", "#2bd67b"];
+      particles = Array.from({ length: count }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        size: 4 + Math.random() * 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speed: 2 + Math.random() * 3,
+        drift: -1 + Math.random() * 2,
+        rotation: Math.random() * Math.PI,
+      }));
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p) => {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+
+        p.y += p.speed;
+        p.x += p.drift;
+        p.rotation += 0.05;
+        if (p.y > canvas.height) {
+          p.y = -10;
+          p.x = Math.random() * canvas.width;
+        }
+      });
+      rafRef.current = requestAnimationFrame(draw);
+    };
+
+    createParticles();
+    draw();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [active]);
+
+  if (!active) return null;
+  return (
+    <div className="confetti-overlay">
+      <canvas ref={canvasRef} />
+    </div>
+  );
 }
 
 function formatDuration(ms) {
@@ -358,6 +427,7 @@ export default function Jackpots() {
     <div className="page">
       {triggerModal.open && (
         <div className="modal-backdrop">
+          <ConfettiOverlay active />
           <div className="modal">
             <div className="modal-header">
               <div>
