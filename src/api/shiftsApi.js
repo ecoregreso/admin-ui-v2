@@ -1,4 +1,4 @@
-import api from "./api";
+import api from "./api.js";
 
 export async function fetchShiftSummary(date) {
   const res = await api.get("/api/v1/admin/shifts/summary", { params: { date } });
