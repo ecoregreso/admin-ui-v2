@@ -26,3 +26,24 @@ export async function updateVoucherWinCapPolicy({
   const res = await api.put("/api/v1/config/voucher-win-cap/policy", payload);
   return res.data;
 }
+
+export async function getOutcomeModeOptions(tenantId) {
+  const params = tenantId ? { tenantId } : undefined;
+  const res = await api.get(
+    "/api/v1/config/outcome-mode/options",
+    params ? { params } : undefined
+  );
+  return res.data;
+}
+
+export async function updateOutcomeMode({
+  tenantId,
+  outcomeMode,
+}) {
+  const payload = { outcomeMode };
+  if (tenantId) {
+    payload.tenantId = tenantId;
+  }
+  const res = await api.put("/api/v1/config/outcome-mode", payload);
+  return res.data;
+}

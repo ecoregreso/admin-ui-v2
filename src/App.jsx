@@ -24,6 +24,7 @@ import AnalyticsAudit from "./pages/analytics/AnalyticsAudit.jsx";
 import AnalyticsLtv from "./pages/analytics/AnalyticsLtv.jsx";
 import Jackpots from "./pages/analytics/Jackpots.jsx";
 import SecurityLab from "./pages/SecurityLab.jsx";
+import SystemSettings from "./pages/SystemSettings.jsx";
 import ShiftReconciliation from "./pages/ShiftReconciliation.jsx";
 import AdminLayout from "./layout/AdminLayout.jsx";
 import { useStaffAuth } from "./context/StaffAuthContext.jsx";
@@ -280,6 +281,14 @@ export default function App() {
             element={
               <RequirePermission permission="staff:manage">
                 <SecurityLab />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="system/settings"
+            element={
+              <RequirePermission permission="finance:read">
+                <SystemSettings />
               </RequirePermission>
             }
           />
