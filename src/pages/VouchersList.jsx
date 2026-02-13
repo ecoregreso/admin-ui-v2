@@ -45,6 +45,24 @@ function findVoucherCap(voucher) {
   return 0;
 }
 
+function findFinalAmountSettled(voucher) {
+  const direct = Number(voucher?.finalAmountSettled);
+  if (Number.isFinite(direct) && direct >= 0) return direct;
+  const cashout = Number(voucher?.cashoutAmount);
+  if (Number.isFinite(cashout) && cashout >= 0) return cashout;
+  const metadata = Number(voucher?.metadata?.finalAmountSettled ?? voucher?.metadata?.cashoutAmount);
+  if (Number.isFinite(metadata) && metadata >= 0) return metadata;
+  return 0;
+}
+
+function findCurrentVoucherValue(voucher) {
+  const direct = Number(voucher?.currentVoucherValue);
+  if (Number.isFinite(direct) && direct >= 0) return direct;
+  const status = String(voucher?.status || "").toLowerCase();
+  if (status === "terminated") return findFinalAmountSettled(voucher);
+  return 0;
+}
+
 function capModeLabel(mode) {
   if (mode === RANDOM_MODE) return "random";
   if (mode === FIXED_MODE) return "fixed";
@@ -493,7 +511,7 @@ export default function VouchersList() {
         tenantId: isOwner ? ownerTenant : undefined,
       });
       const voucher = extractVoucherFromResponse(data);
-      setCashoutResult(voucher);
+      setCashoutResult(data || null);
       setCashoutStatus(
         voucher?.code
           ? `Voucher ${voucher.code} terminated successfully.`
@@ -942,6 +960,10 @@ export default function VouchersList() {
               <div className="stat-value">{cashoutCandidate.status || "-"}</div>
             </div>
             <div>
+              <div className="stat-label">Current Voucher Value</div>
+              <div className="stat-value">${fmt(findCurrentVoucherValue(cashoutCandidate))}</div>
+            </div>
+            <div>
               <div className="stat-label">Total Credit</div>
               <div className="stat-value">
                 $
@@ -954,6 +976,14 @@ export default function VouchersList() {
             <div>
               <div className="stat-label">Max Cashout</div>
               <div className="stat-value">${fmt(findVoucherCap(cashoutCandidate))}</div>
+            </div>
+            <div>
+              <div className="stat-label">Final Amount Settled</div>
+              <div className="stat-value">
+                {String(cashoutCandidate?.status || "").toLowerCase() === "terminated"
+                  ? `$${fmt(findFinalAmountSettled(cashoutCandidate))}`
+                  : "-"}
+              </div>
             </div>
           </div>
         )}
@@ -972,7 +1002,17 @@ export default function VouchersList() {
 
         {cashoutResult && (
           <div className="hint" style={{ marginTop: 8 }}>
-            Cashout recorded at {fmtDate(cashoutResult?.metadata?.terminatedAt || null) || "now"}.
+            Cashout recorded at{" "}
+            {fmtDate(cashoutResult?.voucher?.metadata?.terminatedAt || null) || "now"}.
+            {" "}Final amount settled: $
+            {fmt(
+              Number(
+                cashoutResult?.cashout?.finalAmountSettled ??
+                  cashoutResult?.cashout?.amount ??
+                  0
+              )
+            )}
+            .
           </div>
         )}
       </div>
@@ -1020,6 +1060,8 @@ export default function VouchersList() {
                 <th>Amount</th>
                 <th>Bonus</th>
                 <th>Max Cap</th>
+                <th>Current Value</th>
+                <th>Final Settled</th>
                 <th>Cap Strategy</th>
                 <th>Cur</th>
                 <th>Status</th>
@@ -1044,54 +1086,91 @@ export default function VouchersList() {
                 const capPercent = capStrategy.percent
                   ? `${fmt(capStrategy.percent)}%`
                   : "-";
+                const finalSettled = findFinalAmountSettled(v);
+                const ledgerRows =
+                  Array.isArray(v?.voucherLedgerRows) && v.voucherLedgerRows.length
+                    ? v.voucherLedgerRows
+                    : [
+                        {
+                          key: "current_voucher_value",
+                          label: "Current Voucher Value",
+                          amount: findCurrentVoucherValue(v),
+                        },
+                        ...(String(v?.status || "").toLowerCase() === "terminated"
+                          ? [
+                              {
+                                key: "final_amount_settled",
+                                label: "Final Amount Settled",
+                                amount: finalSettled,
+                              },
+                            ]
+                          : []),
+                      ];
 
                 return (
-                  <tr key={v.id}>
-                    <td>{fmtDate(v.createdAt)}</td>
-                    <td>{v.code}</td>
-                    <td>{userCode}</td>
-                    <td>{v.pin || "-"}</td>
-                    <td>${fmt(v.amount)}</td>
-                    <td>${fmt(v.bonusAmount)}</td>
-                    <td>{maxCap > 0 ? `$${fmt(maxCap)}` : "-"}</td>
-                    <td>{capMode === "-" ? "-" : `${capMode} / ${capPercent}`}</td>
-                    <td>{v.currency}</td>
-                    <td>{v.status}</td>
-                    <td>{creator}</td>
-                    <td>
-                      {qrPath ? (
-                        <a
-                          className="tag tag-blue"
-                          href={buildApiUrl(qrPath)}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          View
-                        </a>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                    <td>
-                      {canTerminate && canTerminateVoucher(v) ? (
-                        <button
-                          type="button"
-                          className="btn btn-danger"
-                          onClick={() => queueCashout(v)}
-                          disabled={cashoutLoading || isBlocked}
-                        >
-                          Cashout
-                        </button>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                  </tr>
+                  <React.Fragment key={v.id}>
+                    <tr>
+                      <td>{fmtDate(v.createdAt)}</td>
+                      <td>{v.code}</td>
+                      <td>{userCode}</td>
+                      <td>{v.pin || "-"}</td>
+                      <td>${fmt(v.amount)}</td>
+                      <td>${fmt(v.bonusAmount)}</td>
+                      <td>{maxCap > 0 ? `$${fmt(maxCap)}` : "-"}</td>
+                      <td>${fmt(findCurrentVoucherValue(v))}</td>
+                      <td>
+                        {String(v?.status || "").toLowerCase() === "terminated"
+                          ? `$${fmt(finalSettled)}`
+                          : "-"}
+                      </td>
+                      <td>{capMode === "-" ? "-" : `${capMode} / ${capPercent}`}</td>
+                      <td>{v.currency}</td>
+                      <td>{v.status}</td>
+                      <td>{creator}</td>
+                      <td>
+                        {qrPath ? (
+                          <a
+                            className="tag tag-blue"
+                            href={buildApiUrl(qrPath)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                      <td>
+                        {canTerminate && canTerminateVoucher(v) ? (
+                          <button
+                            type="button"
+                            className="btn btn-danger"
+                            onClick={() => queueCashout(v)}
+                            disabled={cashoutLoading || isBlocked}
+                          >
+                            Cashout
+                          </button>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colSpan={15} style={{ fontSize: 12, opacity: 0.85 }}>
+                        Voucher Ledger:{" "}
+                        {ledgerRows
+                          .filter((row) => row && row.label)
+                          .map((row) => `${row.label} $${fmt(Number(row.amount || 0))}`)
+                          .join(" | ") || "No voucher ledger rows"}
+                      </td>
+                    </tr>
+                  </React.Fragment>
                 );
               })}
               {!filtered.length && !loading && (
                 <tr>
-                  <td colSpan={13} className="empty">
+                  <td colSpan={15} className="empty">
                     No vouchers found.
                   </td>
                 </tr>

@@ -3,6 +3,12 @@ import api from "../api/client";
 import { useStaffAuth } from "../context/StaffAuthContext";
 import { terminateVoucher } from "../api/vouchersApi";
 
+function fmtMoney(value) {
+  const n = Number(value || 0);
+  if (!Number.isFinite(n)) return "0";
+  return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
 export default function FinanceQueue() {
   const { staff } = useStaffAuth();
   const [loading, setLoading] = useState(false);
@@ -15,6 +21,7 @@ export default function FinanceQueue() {
   const [voucherBusy, setVoucherBusy] = useState(false);
   const [voucherError, setVoucherError] = useState("");
   const [voucherStatus, setVoucherStatus] = useState("");
+  const [voucherCashoutResult, setVoucherCashoutResult] = useState(null);
   const [ownerTenantId, setOwnerTenantId] = useState(() => {
     if (typeof window === "undefined") return "";
     try {
@@ -92,6 +99,7 @@ export default function FinanceQueue() {
     e.preventDefault();
     setVoucherError("");
     setVoucherStatus("");
+    setVoucherCashoutResult(null);
 
     if (!canVoucherCashout) {
       setVoucherError("You do not have permission to cashout vouchers.");
@@ -117,6 +125,7 @@ export default function FinanceQueue() {
       });
       const terminatedCode = data?.voucher?.code || code;
       setVoucherStatus(`Voucher ${terminatedCode} cashout completed.`);
+      setVoucherCashoutResult(data || null);
       setVoucherCode("");
       setVoucherReason("");
     } catch (error) {
@@ -214,6 +223,25 @@ export default function FinanceQueue() {
             </button>
           </div>
         </form>
+
+        {voucherCashoutResult?.cashout && (
+          <div className="grid-3" style={{ marginTop: 12 }}>
+            <div>
+              <div className="stat-label">Final Amount Settled</div>
+              <div className="stat-value">
+                ${fmtMoney(voucherCashoutResult.cashout.finalAmountSettled ?? voucherCashoutResult.cashout.amount)}
+              </div>
+            </div>
+            <div>
+              <div className="stat-label">Current Voucher Value</div>
+              <div className="stat-value">${fmtMoney(voucherCashoutResult.cashout.walletBalanceBefore)}</div>
+            </div>
+            <div>
+              <div className="stat-label">Wallet Balance After</div>
+              <div className="stat-value">${fmtMoney(voucherCashoutResult.cashout.walletBalanceAfter)}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid-2">
