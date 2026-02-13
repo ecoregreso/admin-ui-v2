@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useStaffAuth } from "../context/StaffAuthContext";
-import { createVoucher, listVouchers } from "../api/vouchersApi";
+import { createVoucher, listVouchers, terminateVoucher } from "../api/vouchersApi";
 import { buildApiUrl } from "../api/client";
 import {
   getVoucherWinCapOptions,
@@ -52,6 +52,20 @@ function capModeLabel(mode) {
   return "-";
 }
 
+function extractVoucherFromResponse(data) {
+  if (!data || typeof data !== "object") return null;
+  if (data.voucher && typeof data.voucher === "object") return data.voucher;
+  if (data.data && data.data.voucher && typeof data.data.voucher === "object") {
+    return data.data.voucher;
+  }
+  return null;
+}
+
+function canTerminateVoucher(voucher) {
+  const status = String(voucher?.status || "").toLowerCase();
+  return status !== "terminated";
+}
+
 export default function VouchersList() {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -66,6 +80,7 @@ export default function VouchersList() {
   const effectiveConfig = config?.effective || {};
   const isOwner = staff?.role === "owner";
   const canCreate = (staff?.permissions || []).includes("voucher:write");
+  const canTerminate = (staff?.permissions || []).includes("voucher:terminate");
   const canManagePolicy = ["owner", "operator", "agent"].includes(
     String(staff?.role || "")
   );
@@ -92,6 +107,14 @@ export default function VouchersList() {
   const [copyStatus, setCopyStatus] = useState("");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [cashoutCode, setCashoutCode] = useState("");
+  const [cashoutReason, setCashoutReason] = useState("");
+  const [cashoutConfirm, setCashoutConfirm] = useState(false);
+  const [cashoutLoading, setCashoutLoading] = useState(false);
+  const [cashoutError, setCashoutError] = useState("");
+  const [cashoutStatus, setCashoutStatus] = useState("");
+  const [cashoutResult, setCashoutResult] = useState(null);
+  const cashoutPanelRef = useRef(null);
 
   const [policyLoading, setPolicyLoading] = useState(false);
   const [policyError, setPolicyError] = useState("");
@@ -409,6 +432,84 @@ export default function VouchersList() {
       return code.includes(q) || userCode.includes(q);
     });
   }, [vouchers, search, status]);
+
+  const cashoutCandidate = useMemo(() => {
+    const code = String(cashoutCode || "").trim().toLowerCase();
+    if (!code) return null;
+    return vouchers.find((v) => String(v?.code || "").toLowerCase() === code) || null;
+  }, [cashoutCode, vouchers]);
+
+  function queueCashout(voucher) {
+    if (!voucher?.code) return;
+    setCashoutCode(voucher.code);
+    setCashoutConfirm(false);
+    setCashoutError("");
+    setCashoutStatus(`Selected voucher ${voucher.code} for cashout.`);
+    if (cashoutPanelRef.current) {
+      cashoutPanelRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  async function onCashout(e) {
+    e.preventDefault();
+    setCashoutError("");
+    setCashoutStatus("");
+    setCashoutResult(null);
+
+    if (isBlocked) {
+      setCashoutError(blockedMessage);
+      return;
+    }
+    if (!canTerminate) {
+      setCashoutError("You do not have permission to cashout/terminate vouchers.");
+      return;
+    }
+
+    const code = String(cashoutCode || "").trim();
+    if (!code) {
+      setCashoutError("Voucher code is required.");
+      return;
+    }
+    if (!cashoutConfirm) {
+      setCashoutError("Confirm cashout before submitting.");
+      return;
+    }
+    if (cashoutCandidate && !canTerminateVoucher(cashoutCandidate)) {
+      setCashoutError("Voucher is already terminated.");
+      return;
+    }
+
+    const ownerTenant = ownerTenantId.trim();
+    if (isOwner && !ownerTenant) {
+      setCashoutError("Owner must provide tenant ID before cashout.");
+      return;
+    }
+
+    setCashoutLoading(true);
+    try {
+      const data = await terminateVoucher({
+        code,
+        reason: String(cashoutReason || "").trim() || undefined,
+        tenantId: isOwner ? ownerTenant : undefined,
+      });
+      const voucher = extractVoucherFromResponse(data);
+      setCashoutResult(voucher);
+      setCashoutStatus(
+        voucher?.code
+          ? `Voucher ${voucher.code} terminated successfully.`
+          : "Voucher terminated successfully."
+      );
+      setCashoutConfirm(false);
+      await load();
+    } catch (err) {
+      console.error("[VouchersList] cashout failed:", err);
+      setCashoutError(
+        err?.response?.data?.error || err?.message || "Failed to terminate voucher."
+      );
+    } finally {
+      setCashoutLoading(false);
+    }
+  }
 
   return (
     <div className="page stack">
@@ -755,6 +856,127 @@ export default function VouchersList() {
         )}
       </div>
 
+      <div className="panel" ref={cashoutPanelRef}>
+        <div className="panel-header">
+          <div>
+            <h2 className="panel-title">Voucher Cashout / Terminate</h2>
+            <p className="panel-subtitle">
+              Cashout closes the voucher and marks status as terminated. Jackpot wins are not part of voucher cashout cap logic.
+            </p>
+          </div>
+        </div>
+
+        {cashoutError && <div className="alert alert-error">{cashoutError}</div>}
+        {cashoutStatus && <div className="alert">{cashoutStatus}</div>}
+
+        {!isBlocked && !canTerminate && (
+          <div className="alert">You do not have permission to cashout vouchers.</div>
+        )}
+
+        <form className="form-grid" onSubmit={onCashout}>
+          <div className="field">
+            <label>Voucher Code</label>
+            <input
+              type="text"
+              value={cashoutCode}
+              onChange={(e) => setCashoutCode(e.target.value || "")}
+              className="input"
+              placeholder="Voucher code"
+              disabled={cashoutLoading || isBlocked || !canTerminate}
+            />
+          </div>
+
+          <div className="field">
+            <label>Cashout Reason</label>
+            <input
+              type="text"
+              value={cashoutReason}
+              onChange={(e) => setCashoutReason(e.target.value || "")}
+              className="input"
+              placeholder="optional reason"
+              disabled={cashoutLoading || isBlocked || !canTerminate}
+            />
+          </div>
+
+          {isOwner && (
+            <div className="field">
+              <label>Tenant ID</label>
+              <input
+                type="text"
+                value={ownerTenantId}
+                onChange={(e) => setOwnerTenantId(e.target.value || "")}
+                className="input"
+                placeholder="Tenant UUID"
+                disabled={cashoutLoading}
+              />
+            </div>
+          )}
+
+          <div className="field" style={{ justifyContent: "flex-end" }}>
+            <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="checkbox"
+                checked={cashoutConfirm}
+                onChange={(e) => setCashoutConfirm(Boolean(e.target.checked))}
+                disabled={cashoutLoading || isBlocked || !canTerminate}
+              />
+              Confirm voucher termination
+            </label>
+          </div>
+
+          <div className="field" style={{ alignSelf: "end" }}>
+            <button
+              className="btn btn-danger"
+              type="submit"
+              disabled={cashoutLoading || isBlocked || !canTerminate}
+            >
+              {cashoutLoading ? "Processing..." : "Cashout Voucher"}
+            </button>
+          </div>
+        </form>
+
+        {cashoutCandidate && (
+          <div className="grid-3" style={{ marginTop: 12 }}>
+            <div>
+              <div className="stat-label">Current Status</div>
+              <div className="stat-value">{cashoutCandidate.status || "-"}</div>
+            </div>
+            <div>
+              <div className="stat-label">Total Credit</div>
+              <div className="stat-value">
+                $
+                {fmt(
+                  Number(cashoutCandidate.amount || 0) +
+                    Number(cashoutCandidate.bonusAmount || 0)
+                )}
+              </div>
+            </div>
+            <div>
+              <div className="stat-label">Max Cashout</div>
+              <div className="stat-value">${fmt(findVoucherCap(cashoutCandidate))}</div>
+            </div>
+          </div>
+        )}
+
+        {cashoutCode && !cashoutCandidate && (
+          <div className="hint" style={{ marginTop: 8 }}>
+            Voucher not found in the current list. You can still submit by code.
+          </div>
+        )}
+
+        {cashoutCandidate && !canTerminateVoucher(cashoutCandidate) && (
+          <div className="hint" style={{ marginTop: 8 }}>
+            This voucher is already terminated.
+          </div>
+        )}
+
+        {cashoutResult && (
+          <div className="hint" style={{ marginTop: 8 }}>
+            Cashout recorded at {fmtDate(cashoutResult?.metadata?.terminatedAt || null) || "now"}.
+          </div>
+        )}
+      </div>
+
       <div className="panel">
         <div className="panel-header">
           <div>
@@ -777,6 +999,7 @@ export default function VouchersList() {
               <option value="">All statuses</option>
               <option value="new">new</option>
               <option value="redeemed">redeemed</option>
+              <option value="terminated">terminated</option>
               <option value="cancelled">cancelled</option>
               <option value="expired">expired</option>
             </select>
@@ -802,6 +1025,7 @@ export default function VouchersList() {
                 <th>Status</th>
                 <th>Creator</th>
                 <th>QR</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -848,12 +1072,26 @@ export default function VouchersList() {
                         "-"
                       )}
                     </td>
+                    <td>
+                      {canTerminate && canTerminateVoucher(v) ? (
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          onClick={() => queueCashout(v)}
+                          disabled={cashoutLoading || isBlocked}
+                        >
+                          Cashout
+                        </button>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
                   </tr>
                 );
               })}
               {!filtered.length && !loading && (
                 <tr>
-                  <td colSpan={12} className="empty">
+                  <td colSpan={13} className="empty">
                     No vouchers found.
                   </td>
                 </tr>

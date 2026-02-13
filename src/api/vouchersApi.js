@@ -31,3 +31,15 @@ export async function createVoucher({
   const res = await api.post("/api/v1/vouchers", payload);
   return res.data; // { voucher, pin, userCode, qr }
 }
+
+export async function terminateVoucher({
+  code,
+  reason,
+  tenantId,
+} = {}) {
+  const payload = { code };
+  if (reason) payload.reason = reason;
+  if (tenantId) payload.tenantId = tenantId;
+  const res = await api.post("/api/v1/vouchers/terminate", payload);
+  return res.data;
+}

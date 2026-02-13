@@ -21,7 +21,7 @@ const PERMISSION_GROUPS = [
   },
   {
     label: "Vouchers",
-    perms: ["voucher:read", "voucher:write"],
+    perms: ["voucher:read", "voucher:write", "voucher:terminate"],
   },
 ];
 
@@ -35,11 +35,19 @@ const ROLE_DEFAULTS = {
     "finance:write",
     "voucher:read",
     "voucher:write",
+    "voucher:terminate",
     "betlog:read",
   ],
-  agent: ["player:read", "player:write", "finance:read", "voucher:read"],
+  agent: ["player:read", "player:write", "finance:read", "voucher:read", "voucher:terminate"],
   distributor: ["player:read", "finance:read"],
-  cashier: ["player:read", "finance:write", "finance:read", "voucher:read", "voucher:write"],
+  cashier: [
+    "player:read",
+    "finance:write",
+    "finance:read",
+    "voucher:read",
+    "voucher:write",
+    "voucher:terminate",
+  ],
 };
 
 function displayPermissions(staff) {
