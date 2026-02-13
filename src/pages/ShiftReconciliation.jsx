@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import dayjs from "dayjs";
 import { fetchShiftSummary, closeShift } from "../api/shiftsApi";
 import InfoTooltip from "../components/InfoTooltip";
@@ -19,7 +19,7 @@ export default function ShiftReconciliation() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -31,11 +31,11 @@ export default function ShiftReconciliation() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [date]);
 
   useEffect(() => {
     fetchSummary();
-  }, [date]);
+  }, [fetchSummary]);
 
   const closuresByStaff = useMemo(() => {
     const map = new Map();

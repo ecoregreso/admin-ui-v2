@@ -156,6 +156,9 @@ const api = {
   post(path, body, config = {}) {
     return request("POST", path, { ...config, body });
   },
+  put(path, body, config = {}) {
+    return request("PUT", path, { ...config, body });
+  },
   patch(path, body, config = {}) {
     return request("PATCH", path, { ...config, body });
   },

@@ -154,10 +154,6 @@ export default function PlayersList() {
     playerInfo?.liveStatus ??
     playerInfo?.status ??
     (playerInfo?.isActive ? "active" : "inactive");
-  const isActive =
-    playerStatus === "live" ||
-    playerStatus === "active" ||
-    playerInfo?.isActive;
   const isDeprecated = playerInfo?.liveStatus === "deprecated" || playerStatus === "deprecated";
   const totalSpins = rounds.length;
   const totalBet = rounds.reduce((sum, r) => sum + toNumber(r.betAmount), 0);
