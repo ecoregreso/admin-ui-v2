@@ -3,10 +3,12 @@ import { useStaffAuth } from "../context/StaffAuthContext";
 import { createVoucher, listVouchers, terminateVoucher } from "../api/vouchersApi";
 import { buildApiUrl } from "../api/client";
 import {
+  getOutcomeModeOptions,
   getVoucherWinCapOptions,
   updateVoucherWinCapPolicy,
 } from "../api/configApi";
 
+const DEFAULT_OUTCOME_MODE = "voucher_controlled";
 const FIXED_MODE = "fixed_percent";
 const RANDOM_MODE = "random_percent";
 const DEFAULT_PERCENT_OPTIONS = [120, 150, 175, 200, 250, 300];
@@ -96,6 +98,9 @@ export default function VouchersList() {
 
   const { staff, config, configLoading, refreshConfig } = useStaffAuth();
   const effectiveConfig = config?.effective || {};
+  const effectiveOutcomeMode = String(
+    effectiveConfig.outcomeMode || DEFAULT_OUTCOME_MODE
+  ).toLowerCase();
   const isOwner = staff?.role === "owner";
   const canCreate = (staff?.permissions || []).includes("voucher:write");
   const canTerminate = (staff?.permissions || []).includes("voucher:terminate");
@@ -137,6 +142,7 @@ export default function VouchersList() {
   const [policyLoading, setPolicyLoading] = useState(false);
   const [policyError, setPolicyError] = useState("");
   const [policyStatus, setPolicyStatus] = useState("");
+  const [outcomeMode, setOutcomeMode] = useState(effectiveOutcomeMode);
   const [capPolicy, setCapPolicy] = useState(null);
   const [policyForm, setPolicyForm] = useState({
     mode: FIXED_MODE,
@@ -165,6 +171,7 @@ export default function VouchersList() {
     const trimmed = ownerTenantId.trim();
     return trimmed || null;
   }, [isOwner, ownerTenantId]);
+  const outcomesControlledByVoucher = outcomeMode !== "pure_rng";
 
   async function load() {
     setError("");
@@ -200,12 +207,27 @@ export default function VouchersList() {
     setPolicyStatus("");
 
     if (isOwner && !targetTenantId) {
+      setOutcomeMode(effectiveOutcomeMode);
       setCapPolicy(null);
       return;
     }
 
     setPolicyLoading(true);
     try {
+      const modeData = await getOutcomeModeOptions(targetTenantId || undefined);
+      const resolvedMode = String(
+        modeData?.outcomeMode ||
+          modeData?.currentMode ||
+          effectiveOutcomeMode ||
+          DEFAULT_OUTCOME_MODE
+      ).toLowerCase();
+      setOutcomeMode(resolvedMode);
+
+      if (resolvedMode === "pure_rng") {
+        setCapPolicy(null);
+        return;
+      }
+
       const data = await getVoucherWinCapOptions(targetTenantId || undefined);
       const policy = data?.policy || data?.options?.defaults || null;
       setCapPolicy(policy);
@@ -221,7 +243,7 @@ export default function VouchersList() {
     } finally {
       setPolicyLoading(false);
     }
-  }, [applyPolicyToForm, isOwner, targetTenantId]);
+  }, [applyPolicyToForm, effectiveOutcomeMode, isOwner, targetTenantId]);
 
   useEffect(() => {
     if (configLoading) return;
@@ -239,6 +261,13 @@ export default function VouchersList() {
   }, [configLoading, loadPolicyOptions]);
 
   useEffect(() => {
+    if (configLoading) return;
+    if (!isOwner || !targetTenantId) {
+      setOutcomeMode(effectiveOutcomeMode);
+    }
+  }, [configLoading, effectiveOutcomeMode, isOwner, targetTenantId]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       if (isOwner) {
@@ -252,6 +281,8 @@ export default function VouchersList() {
   }, [isOwner, ownerTenantId]);
 
   const createCapPreview = useMemo(() => {
+    if (!outcomesControlledByVoucher) return "";
+
     const a = Number(amount || 0);
     const b = Number(bonusAmount || 0);
     if (!Number.isFinite(a) || a <= 0) return "";
@@ -288,7 +319,14 @@ export default function VouchersList() {
     const pct = Number(capPolicy?.fixedPercent || 200);
     const cap = Math.max(totalCredit, (a * pct) / 100);
     return `Tenant default is ${fmt(pct)}% (~$${fmt(cap)}).`;
-  }, [amount, bonusAmount, createCapChoice, capPolicy, randomPercentOptions]);
+  }, [
+    amount,
+    bonusAmount,
+    createCapChoice,
+    capPolicy,
+    outcomesControlledByVoucher,
+    randomPercentOptions,
+  ]);
 
   async function onCreate(e) {
     e.preventDefault();
@@ -316,13 +354,15 @@ export default function VouchersList() {
     let winCapMode;
     let winCapPercent;
 
-    if (createCapChoice === "random") {
-      winCapMode = RANDOM_MODE;
-    } else if (createCapChoice.startsWith("fixed:")) {
-      winCapMode = FIXED_MODE;
-      winCapPercent = Number(createCapChoice.split(":")[1] || 0);
-      if (!Number.isFinite(winCapPercent) || winCapPercent <= 0) {
-        return setError("Invalid cap percent selection.");
+    if (outcomesControlledByVoucher) {
+      if (createCapChoice === "random") {
+        winCapMode = RANDOM_MODE;
+      } else if (createCapChoice.startsWith("fixed:")) {
+        winCapMode = FIXED_MODE;
+        winCapPercent = Number(createCapChoice.split(":")[1] || 0);
+        if (!Number.isFinite(winCapPercent) || winCapPercent <= 0) {
+          return setError("Invalid cap percent selection.");
+        }
       }
     }
 
@@ -357,6 +397,11 @@ export default function VouchersList() {
     e.preventDefault();
     setPolicyError("");
     setPolicyStatus("");
+
+    if (!outcomesControlledByVoucher) {
+      setPolicyError("Voucher win cap policy is disabled while outcome mode is Pure RNG.");
+      return;
+    }
 
     if (!canManagePolicy) {
       setPolicyError("You do not have access to update voucher win cap policy.");
@@ -531,168 +576,184 @@ export default function VouchersList() {
 
   return (
     <div className="page stack">
-      <div className="panel">
-        <div className="panel-header">
-          <div>
-            <h2 className="panel-title">Voucher Win Cap Policy</h2>
-            <p className="panel-subtitle">
-              Configure fixed percentage caps or random cap pool used by voucher creation.
-            </p>
+      {outcomesControlledByVoucher ? (
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h2 className="panel-title">Voucher Win Cap Policy</h2>
+              <p className="panel-subtitle">
+                Configure fixed percentage caps or random cap pool used by voucher creation.
+              </p>
+            </div>
+          </div>
+
+          {policyError && <div className="alert alert-error">{policyError}</div>}
+          {policyStatus && <div className="alert">{policyStatus}</div>}
+
+          {isOwner && (
+            <div className="field" style={{ marginTop: 8, maxWidth: 420 }}>
+              <label>Tenant ID</label>
+              <input
+                type="text"
+                value={ownerTenantId}
+                onChange={(e) => setOwnerTenantId(e.target.value || "")}
+                className="input"
+                placeholder="Tenant UUID"
+              />
+              <div className="hint">Owner actions require a tenant ID target.</div>
+            </div>
+          )}
+
+          {!isOwner || targetTenantId ? (
+            <form className="form-grid" onSubmit={onSavePolicy} style={{ marginTop: 12 }}>
+              <div className="field">
+                <label>Default Mode</label>
+                <select
+                  className="select"
+                  value={policyForm.mode}
+                  onChange={(e) =>
+                    setPolicyForm((prev) => ({ ...prev, mode: e.target.value }))
+                  }
+                  disabled={policyLoading || !canManagePolicy}
+                >
+                  <option value={FIXED_MODE}>Fixed Percent</option>
+                  <option value={RANDOM_MODE}>Random Percent</option>
+                </select>
+              </div>
+
+              <div className="field">
+                <label>Fixed Percent</label>
+                <select
+                  className="select"
+                  value={policyForm.fixedPercent}
+                  onChange={(e) =>
+                    setPolicyForm((prev) => ({ ...prev, fixedPercent: e.target.value }))
+                  }
+                  disabled={policyLoading || !canManagePolicy}
+                >
+                  {fixedPercentOptions.map((pct) => (
+                    <option key={`fixed-${pct}`} value={pct}>
+                      {fmt(pct)}%
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field">
+                <label>Allowed Percent Options</label>
+                <input
+                  className="input"
+                  value={policyForm.percentOptionsText}
+                  onChange={(e) =>
+                    setPolicyForm((prev) => ({
+                      ...prev,
+                      percentOptionsText: e.target.value,
+                    }))
+                  }
+                  placeholder="120, 150, 200"
+                  disabled={policyLoading || !canManagePolicy}
+                />
+              </div>
+
+              <div className="field">
+                <label>Random Percent Pool</label>
+                <input
+                  className="input"
+                  value={policyForm.randomPercentOptionsText}
+                  onChange={(e) =>
+                    setPolicyForm((prev) => ({
+                      ...prev,
+                      randomPercentOptionsText: e.target.value,
+                    }))
+                  }
+                  placeholder="150, 175, 200, 250"
+                  disabled={policyLoading || !canManagePolicy}
+                />
+              </div>
+
+              <div className="field">
+                <label>Decay Rate</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  max="0.5"
+                  className="input"
+                  value={policyForm.decayRate}
+                  onChange={(e) =>
+                    setPolicyForm((prev) => ({ ...prev, decayRate: e.target.value }))
+                  }
+                  disabled={policyLoading || !canManagePolicy}
+                />
+              </div>
+
+              <div className="field">
+                <label>Min Decay Amount</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="input"
+                  value={policyForm.minDecayAmount}
+                  onChange={(e) =>
+                    setPolicyForm((prev) => ({
+                      ...prev,
+                      minDecayAmount: e.target.value,
+                    }))
+                  }
+                  disabled={policyLoading || !canManagePolicy}
+                />
+              </div>
+
+              <div className="field">
+                <label>Stake Decay Multiplier</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="input"
+                  value={policyForm.stakeDecayMultiplier}
+                  onChange={(e) =>
+                    setPolicyForm((prev) => ({
+                      ...prev,
+                      stakeDecayMultiplier: e.target.value,
+                    }))
+                  }
+                  disabled={policyLoading || !canManagePolicy}
+                />
+              </div>
+
+              <div className="field" style={{ alignSelf: "end" }}>
+                <button
+                  className="btn btn-primary"
+                  type="submit"
+                  disabled={policyLoading || !canManagePolicy}
+                >
+                  {policyLoading ? "Saving..." : "Save Cap Policy"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="hint" style={{ marginTop: 12 }}>
+              Provide a tenant ID to load and edit voucher cap policy.
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h2 className="panel-title">Voucher Win Cap Policy</h2>
+              <p className="panel-subtitle">
+                Outcome mode is Pure RNG, so voucher win-cap configuration is hidden.
+              </p>
+            </div>
+          </div>
+          <div className="hint">
+            Switch outcome mode to Voucher Controlled in System Settings to manage win-cap policy.
           </div>
         </div>
-
-        {policyError && <div className="alert alert-error">{policyError}</div>}
-        {policyStatus && <div className="alert">{policyStatus}</div>}
-
-        {isOwner && (
-          <div className="field" style={{ marginTop: 8, maxWidth: 420 }}>
-            <label>Tenant ID</label>
-            <input
-              type="text"
-              value={ownerTenantId}
-              onChange={(e) => setOwnerTenantId(e.target.value || "")}
-              className="input"
-              placeholder="Tenant UUID"
-            />
-            <div className="hint">Owner actions require a tenant ID target.</div>
-          </div>
-        )}
-
-        {!isOwner || targetTenantId ? (
-          <form className="form-grid" onSubmit={onSavePolicy} style={{ marginTop: 12 }}>
-            <div className="field">
-              <label>Default Mode</label>
-              <select
-                className="select"
-                value={policyForm.mode}
-                onChange={(e) =>
-                  setPolicyForm((prev) => ({ ...prev, mode: e.target.value }))
-                }
-                disabled={policyLoading || !canManagePolicy}
-              >
-                <option value={FIXED_MODE}>Fixed Percent</option>
-                <option value={RANDOM_MODE}>Random Percent</option>
-              </select>
-            </div>
-
-            <div className="field">
-              <label>Fixed Percent</label>
-              <select
-                className="select"
-                value={policyForm.fixedPercent}
-                onChange={(e) =>
-                  setPolicyForm((prev) => ({ ...prev, fixedPercent: e.target.value }))
-                }
-                disabled={policyLoading || !canManagePolicy}
-              >
-                {fixedPercentOptions.map((pct) => (
-                  <option key={`fixed-${pct}`} value={pct}>
-                    {fmt(pct)}%
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="field">
-              <label>Allowed Percent Options</label>
-              <input
-                className="input"
-                value={policyForm.percentOptionsText}
-                onChange={(e) =>
-                  setPolicyForm((prev) => ({
-                    ...prev,
-                    percentOptionsText: e.target.value,
-                  }))
-                }
-                placeholder="120, 150, 200"
-                disabled={policyLoading || !canManagePolicy}
-              />
-            </div>
-
-            <div className="field">
-              <label>Random Percent Pool</label>
-              <input
-                className="input"
-                value={policyForm.randomPercentOptionsText}
-                onChange={(e) =>
-                  setPolicyForm((prev) => ({
-                    ...prev,
-                    randomPercentOptionsText: e.target.value,
-                  }))
-                }
-                placeholder="150, 175, 200, 250"
-                disabled={policyLoading || !canManagePolicy}
-              />
-            </div>
-
-            <div className="field">
-              <label>Decay Rate</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0.01"
-                max="0.5"
-                className="input"
-                value={policyForm.decayRate}
-                onChange={(e) =>
-                  setPolicyForm((prev) => ({ ...prev, decayRate: e.target.value }))
-                }
-                disabled={policyLoading || !canManagePolicy}
-              />
-            </div>
-
-            <div className="field">
-              <label>Min Decay Amount</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className="input"
-                value={policyForm.minDecayAmount}
-                onChange={(e) =>
-                  setPolicyForm((prev) => ({
-                    ...prev,
-                    minDecayAmount: e.target.value,
-                  }))
-                }
-                disabled={policyLoading || !canManagePolicy}
-              />
-            </div>
-
-            <div className="field">
-              <label>Stake Decay Multiplier</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className="input"
-                value={policyForm.stakeDecayMultiplier}
-                onChange={(e) =>
-                  setPolicyForm((prev) => ({
-                    ...prev,
-                    stakeDecayMultiplier: e.target.value,
-                  }))
-                }
-                disabled={policyLoading || !canManagePolicy}
-              />
-            </div>
-
-            <div className="field" style={{ alignSelf: "end" }}>
-              <button
-                className="btn btn-primary"
-                type="submit"
-                disabled={policyLoading || !canManagePolicy}
-              >
-                {policyLoading ? "Saving..." : "Save Cap Policy"}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="hint" style={{ marginTop: 12 }}>
-            Provide a tenant ID to load and edit voucher cap policy.
-          </div>
-        )}
-      </div>
+      )}
 
       <div className="panel">
         <div className="panel-header">
@@ -745,24 +806,26 @@ export default function VouchersList() {
             </select>
           </div>
 
-          <div className="field">
-            <label>Win Cap Selection</label>
-            <select
-              value={createCapChoice}
-              onChange={(e) => setCreateCapChoice(e.target.value)}
-              className="select"
-              disabled={policyLoading}
-            >
-              <option value="policy_default">Tenant Default</option>
-              <option value="random">Random (policy pool)</option>
-              {fixedPercentOptions.map((pct) => (
-                <option key={`create-fixed-${pct}`} value={`fixed:${pct}`}>
-                  Fixed {fmt(pct)}%
-                </option>
-              ))}
-            </select>
-            {createCapPreview && <div className="hint">{createCapPreview}</div>}
-          </div>
+          {outcomesControlledByVoucher && (
+            <div className="field">
+              <label>Win Cap Selection</label>
+              <select
+                value={createCapChoice}
+                onChange={(e) => setCreateCapChoice(e.target.value)}
+                className="select"
+                disabled={policyLoading}
+              >
+                <option value="policy_default">Tenant Default</option>
+                <option value="random">Random (policy pool)</option>
+                {fixedPercentOptions.map((pct) => (
+                  <option key={`create-fixed-${pct}`} value={`fixed:${pct}`}>
+                    Fixed {fmt(pct)}%
+                  </option>
+                ))}
+              </select>
+              {createCapPreview && <div className="hint">{createCapPreview}</div>}
+            </div>
+          )}
 
           {isOwner && (
             <div className="field">
@@ -826,24 +889,30 @@ export default function VouchersList() {
               </div>
             </div>
 
-            <div className="grid-3" style={{ marginTop: 12 }}>
-              <div>
-                <div className="stat-label">Max Cashout</div>
-                <div className="stat-value">${fmt(findVoucherCap(created.voucher))}</div>
-              </div>
-              <div>
-                <div className="stat-label">Cap Mode</div>
-                <div className="stat-value">{capModeLabel(created.voucher?.metadata?.capStrategy?.mode)}</div>
-              </div>
-              <div>
-                <div className="stat-label">Cap Percent</div>
-                <div className="stat-value">
-                  {created.voucher?.metadata?.capStrategy?.percent
-                    ? `${fmt(created.voucher.metadata.capStrategy.percent)}%`
-                    : "-"}
+            {outcomesControlledByVoucher ? (
+              <div className="grid-3" style={{ marginTop: 12 }}>
+                <div>
+                  <div className="stat-label">Max Cashout</div>
+                  <div className="stat-value">${fmt(findVoucherCap(created.voucher))}</div>
+                </div>
+                <div>
+                  <div className="stat-label">Cap Mode</div>
+                  <div className="stat-value">{capModeLabel(created.voucher?.metadata?.capStrategy?.mode)}</div>
+                </div>
+                <div>
+                  <div className="stat-label">Cap Percent</div>
+                  <div className="stat-value">
+                    {created.voucher?.metadata?.capStrategy?.percent
+                      ? `${fmt(created.voucher.metadata.capStrategy.percent)}%`
+                      : "-"}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="hint" style={{ marginTop: 12 }}>
+                Voucher created in Pure RNG mode. Win-cap controls are not applied.
+              </div>
+            )}
 
             {copyStatus && <div className="hint" style={{ marginTop: 8 }}>{copyStatus}</div>}
 
@@ -975,7 +1044,11 @@ export default function VouchersList() {
             </div>
             <div>
               <div className="stat-label">Max Cashout</div>
-              <div className="stat-value">${fmt(findVoucherCap(cashoutCandidate))}</div>
+              <div className="stat-value">
+                {outcomesControlledByVoucher
+                  ? `$${fmt(findVoucherCap(cashoutCandidate))}`
+                  : "N/A (Pure RNG)"}
+              </div>
             </div>
             <div>
               <div className="stat-label">Final Amount Settled</div>
@@ -1080,10 +1153,12 @@ export default function VouchersList() {
                     : v.createdByActorType === "user"
                     ? `user:${String(v.createdByUserId || "").slice(0, 8)}...`
                     : "";
-                const maxCap = findVoucherCap(v);
+                const maxCap = outcomesControlledByVoucher ? findVoucherCap(v) : 0;
                 const capStrategy = v?.metadata?.capStrategy || {};
-                const capMode = capModeLabel(capStrategy.mode);
-                const capPercent = capStrategy.percent
+                const capMode = outcomesControlledByVoucher
+                  ? capModeLabel(capStrategy.mode)
+                  : "-";
+                const capPercent = outcomesControlledByVoucher && capStrategy.percent
                   ? `${fmt(capStrategy.percent)}%`
                   : "-";
                 const finalSettled = findFinalAmountSettled(v);
