@@ -5,8 +5,11 @@ import "./index.css";
 import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
 import { loadBrand } from "./brand/loadBrand";
 import { applyBrandToCssVars } from "./brand/applyBrand";
+import { applyThemeSettings, readThemeSettings } from "./utils/themeSettings";
 
 async function bootstrap() {
+  applyThemeSettings(readThemeSettings());
+
   try {
     const brand = await loadBrand();
     applyBrandToCssVars(brand);

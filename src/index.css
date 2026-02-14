@@ -1338,3 +1338,197 @@ textarea:focus {
   border-color: rgba(0, 210, 255, 0.8);
   box-shadow: 0 0 14px rgba(0, 200, 255, 0.35);
 }
+
+/* ---- Runtime Theme Modes ---- */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --pt-bg: #eaf1fb;
+  --pt-panel: rgba(255, 255, 255, 0.9);
+  --pt-panel-strong: rgba(255, 255, 255, 0.96);
+  --pt-panel-glass: rgba(248, 252, 255, 0.9);
+  --pt-text: #102235;
+  --pt-text-muted: rgba(16, 34, 53, 0.72);
+  --pt-text-faint: rgba(16, 34, 53, 0.52);
+  --pt-accent: #0a67c8;
+  --pt-accent-soft: rgba(10, 103, 200, 0.24);
+  --pt-danger: #c92a3d;
+  --pt-danger-soft: rgba(201, 42, 61, 0.2);
+  --pt-border: rgba(16, 34, 53, 0.14);
+  --pt-border-strong: rgba(16, 34, 53, 0.26);
+  --pt-border-rail: rgba(10, 103, 200, 0.34);
+  --pt-glow: 0 0 20px rgba(10, 103, 200, 0.24);
+  --pt-glow-danger: 0 0 20px rgba(201, 42, 61, 0.22);
+  --pt-shadow-soft: 0 10px 26px rgba(16, 34, 53, 0.1);
+  --pt-shadow-strong: 0 18px 36px rgba(16, 34, 53, 0.14);
+
+  --bg-obsidian: #f3f7ff;
+  --bg-metal: #e4ebf8;
+
+  --steel-1: #102235;
+  --steel-2: #304a62;
+  --steel-3: #4f667c;
+  --steel-4: #6b8094;
+
+  --shell-bg: radial-gradient(120% 90% at 50% 0%, #edf5ff 0%, #e5effb 58%, #dce8f6 100%);
+  --shell-card: rgba(255, 255, 255, 0.92);
+  --shell-border: rgba(16, 34, 53, 0.14);
+  --shell-accent: #0a67c8;
+  --shell-accent-2: #2d86da;
+  --shell-text: #102235;
+  --shell-muted: rgba(16, 34, 53, 0.72);
+  --shell-shadow: 0 12px 30px rgba(16, 34, 53, 0.12);
+}
+
+:root[data-theme="light"] body {
+  background-image:
+    radial-gradient(circle at 10% 10%, rgba(10, 103, 200, 0.1), transparent 45%),
+    radial-gradient(circle at 92% 20%, rgba(201, 42, 61, 0.08), transparent 45%),
+    radial-gradient(circle at 30% 90%, rgba(16, 34, 53, 0.05), transparent 50%),
+    linear-gradient(160deg, #f2f7ff 0%, #e7effb 42%, #dde8f6 100%);
+}
+
+:root[data-theme="light"] body::before {
+  opacity: 0.3;
+  mix-blend-mode: normal;
+  background:
+    repeating-linear-gradient(
+      120deg,
+      rgba(16, 34, 53, 0.05) 0,
+      rgba(16, 34, 53, 0.03) 2px,
+      transparent 2px,
+      transparent 8px
+    );
+}
+
+:root[data-theme="light"] body::after {
+  background: radial-gradient(circle at 50% 0%, rgba(10, 103, 200, 0.08), transparent 62%);
+}
+
+:root[data-theme="light"] .sidebar {
+  border-right: 1px solid rgba(16, 34, 53, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(241, 247, 255, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+:root[data-theme="light"] .brand {
+  border-bottom: 1px solid rgba(16, 34, 53, 0.1);
+}
+
+:root[data-theme="light"] .nav-link {
+  color: var(--shell-muted);
+  border-color: rgba(16, 34, 53, 0.08);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(236, 244, 255, 0.78));
+}
+
+:root[data-theme="light"] .nav-link:hover {
+  border-color: rgba(10, 103, 200, 0.22);
+  color: var(--shell-text);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(225, 236, 251, 0.82));
+}
+
+:root[data-theme="light"] .nav-link--active {
+  border-color: rgba(10, 103, 200, 0.34);
+  color: var(--shell-text);
+  background: rgba(10, 103, 200, 0.08);
+  box-shadow: 0 8px 20px rgba(16, 34, 53, 0.1);
+}
+
+:root[data-theme="light"] .sidebar-footer {
+  border-top: 1px solid rgba(16, 34, 53, 0.1);
+}
+
+:root[data-theme="light"] .btn-ghost {
+  border-color: rgba(16, 34, 53, 0.18);
+  color: var(--shell-text);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(229, 239, 251, 0.75));
+}
+
+:root[data-theme="light"] .main-col {
+  background: radial-gradient(circle at 30% 20%, rgba(10, 103, 200, 0.08), transparent 35%), var(--shell-bg);
+}
+
+:root[data-theme="light"] .app-header {
+  border-bottom: 1px solid rgba(16, 34, 53, 0.12);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.88), rgba(237, 244, 255, 0.86));
+}
+
+:root[data-theme="light"] .status-pill {
+  border-color: rgba(10, 103, 200, 0.4);
+  color: #0a67c8;
+  background: radial-gradient(circle at 20% 20%, rgba(10, 103, 200, 0.12), rgba(255, 255, 255, 0.7));
+}
+
+:root[data-theme="light"] .btn-primary {
+  color: #f7fbff;
+  background: linear-gradient(135deg, #2493ff, #0a67c8);
+  box-shadow:
+    0 0 14px rgba(36, 147, 255, 0.32),
+    0 0 24px rgba(10, 103, 200, 0.22);
+}
+
+:root[data-theme="light"] .btn-secondary {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(231, 241, 255, 0.76));
+  border-color: rgba(16, 34, 53, 0.16);
+  color: var(--shell-text);
+}
+
+:root[data-theme="light"] .btn-secondary:hover {
+  border-color: rgba(10, 103, 200, 0.34);
+}
+
+:root[data-theme="light"] input,
+:root[data-theme="light"] select,
+:root[data-theme="light"] textarea {
+  border: 1px solid rgba(16, 34, 53, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(240, 247, 255, 0.94));
+  color: var(--shell-text);
+}
+
+:root[data-theme="light"] input:focus,
+:root[data-theme="light"] select:focus,
+:root[data-theme="light"] textarea:focus {
+  border-color: rgba(10, 103, 200, 0.58);
+  box-shadow: 0 0 0 3px rgba(10, 103, 200, 0.16);
+}
+
+:root[data-theme-contrast="high"] {
+  --pt-border: rgba(255, 255, 255, 0.28);
+  --pt-border-strong: rgba(255, 255, 255, 0.48);
+  --shell-border: rgba(255, 255, 255, 0.32);
+  --shell-muted: rgba(230, 236, 245, 0.9);
+}
+
+:root[data-theme="light"][data-theme-contrast="high"] {
+  --pt-border: rgba(16, 34, 53, 0.35);
+  --pt-border-strong: rgba(16, 34, 53, 0.55);
+  --shell-border: rgba(16, 34, 53, 0.34);
+  --shell-muted: rgba(16, 34, 53, 0.9);
+}
+
+:root[data-theme-density="compact"] .panel {
+  padding: 14px;
+}
+
+:root[data-theme-density="compact"] .form-grid {
+  gap: 10px;
+}
+
+:root[data-theme-density="compact"] .btn,
+:root[data-theme-density="compact"] .btn-primary,
+:root[data-theme-density="compact"] .btn-secondary {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+:root[data-theme-neon="off"] {
+  --pt-accent-soft: rgba(39, 217, 255, 0.14);
+  --pt-danger-soft: rgba(255, 48, 79, 0.16);
+  --pt-glow: none;
+  --pt-glow-danger: none;
+}
+
+:root[data-theme="light"][data-theme-neon="off"] {
+  --pt-accent-soft: rgba(10, 103, 200, 0.14);
+  --pt-danger-soft: rgba(201, 42, 61, 0.14);
+}

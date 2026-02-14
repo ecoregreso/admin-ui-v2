@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useStaffAuth } from "../context/StaffAuthContext";
 import { getOutcomeModeOptions, updateOutcomeMode } from "../api/configApi";
+import {
+  THEME_SETTINGS_KEY,
+  applyThemeSettings,
+  readThemeSettings,
+  saveThemeSettings,
+} from "../utils/themeSettings";
 
 const DEFAULT_OUTCOME_MODE = "voucher_controlled";
 const DEFAULT_OUTCOME_OPTIONS = [
@@ -23,6 +29,14 @@ function formatModeLabel(value) {
   if (mode === "pure_rng") return "Pure RNG";
   if (mode === "voucher_controlled") return "Voucher Controlled";
   return value || "-";
+}
+
+function formatThemeModeLabel(value) {
+  const mode = String(value || "").toLowerCase();
+  if (mode === "light") return "Light";
+  if (mode === "dark") return "Dark";
+  if (mode === "auto") return "Auto (system)";
+  return "Dark";
 }
 
 export default function SystemSettings() {
@@ -56,11 +70,12 @@ export default function SystemSettings() {
   const [modeError, setModeError] = useState("");
   const [modeStatus, setModeStatus] = useState("");
 
-  const [themePreview, setThemePreview] = useState("light");
+  const initialTheme = useMemo(() => readThemeSettings(), []);
+  const [themePreview, setThemePreview] = useState(initialTheme.mode);
   const [themeFx, setThemeFx] = useState({
-    highContrast: false,
-    compactDensity: false,
-    neonAccents: false,
+    highContrast: initialTheme.highContrast,
+    compactDensity: initialTheme.compactDensity,
+    neonAccents: initialTheme.neonAccents,
   });
   const [themeStatus, setThemeStatus] = useState("");
 
@@ -135,29 +150,75 @@ export default function SystemSettings() {
     if (typeof window === "undefined") return;
     try {
       const raw = localStorage.getItem("ptu_system_settings_placeholders");
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed?.themePreview) setThemePreview(parsed.themePreview);
-      if (parsed?.themeFx && typeof parsed.themeFx === "object") {
-        setThemeFx((prev) => ({ ...prev, ...parsed.themeFx }));
-      }
-      if (parsed?.featureFlags && typeof parsed.featureFlags === "object") {
-        setFeatureFlags((prev) => ({ ...prev, ...parsed.featureFlags }));
-      }
-      if (parsed?.operatorPrefs && typeof parsed.operatorPrefs === "object") {
-        setOperatorPrefs((prev) => ({ ...prev, ...parsed.operatorPrefs }));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.featureFlags && typeof parsed.featureFlags === "object") {
+          setFeatureFlags((prev) => ({ ...prev, ...parsed.featureFlags }));
+        }
+        if (parsed?.operatorPrefs && typeof parsed.operatorPrefs === "object") {
+          setOperatorPrefs((prev) => ({ ...prev, ...parsed.operatorPrefs }));
+        }
+
+        // Legacy migration: old placeholder theme values -> dedicated theme storage.
+        const hasDedicatedTheme = Boolean(localStorage.getItem(THEME_SETTINGS_KEY));
+        if (!hasDedicatedTheme && (parsed?.themePreview || parsed?.themeFx)) {
+          const migrated = {
+            mode: parsed?.themePreview || "dark",
+            highContrast: Boolean(parsed?.themeFx?.highContrast),
+            compactDensity: Boolean(parsed?.themeFx?.compactDensity),
+            neonAccents:
+              parsed?.themeFx?.neonAccents == null ? true : Boolean(parsed?.themeFx?.neonAccents),
+          };
+          const saved = saveThemeSettings(migrated);
+          setThemePreview(saved.mode);
+          setThemeFx({
+            highContrast: saved.highContrast,
+            compactDensity: saved.compactDensity,
+            neonAccents: saved.neonAccents,
+          });
+          applyThemeSettings(saved);
+        }
       }
     } catch {
       // ignore parse errors
     }
   }, []);
 
+  useEffect(() => {
+    applyThemeSettings({
+      mode: themePreview,
+      highContrast: themeFx.highContrast,
+      compactDensity: themeFx.compactDensity,
+      neonAccents: themeFx.neonAccents,
+    });
+  }, [themePreview, themeFx.compactDensity, themeFx.highContrast, themeFx.neonAccents]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || themePreview !== "auto" || !window.matchMedia) return undefined;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => {
+      applyThemeSettings({
+        mode: themePreview,
+        highContrast: themeFx.highContrast,
+        compactDensity: themeFx.compactDensity,
+        neonAccents: themeFx.neonAccents,
+      });
+    };
+    if (media.addEventListener) {
+      media.addEventListener("change", onChange);
+      return () => media.removeEventListener("change", onChange);
+    }
+    if (media.addListener) {
+      media.addListener(onChange);
+      return () => media.removeListener(onChange);
+    }
+    return undefined;
+  }, [themePreview, themeFx.compactDensity, themeFx.highContrast, themeFx.neonAccents]);
+
   function persistPlaceholderState(nextPatch = {}) {
     if (typeof window === "undefined") return;
     try {
       const payload = {
-        themePreview,
-        themeFx,
         featureFlags,
         operatorPrefs,
         ...nextPatch,
@@ -199,12 +260,19 @@ export default function SystemSettings() {
     }
   }
 
-  function onSaveThemePlaceholders() {
-    persistPlaceholderState({
-      themePreview,
-      themeFx,
+  function onApplyThemeSettings() {
+    const saved = saveThemeSettings({
+      mode: themePreview,
+      highContrast: themeFx.highContrast,
+      compactDensity: themeFx.compactDensity,
+      neonAccents: themeFx.neonAccents,
     });
-    setThemeStatus("Theme placeholders saved locally for this browser.");
+    const result = applyThemeSettings(saved);
+    setThemeStatus(
+      `Theme applied: ${formatThemeModeLabel(saved.mode)}${
+        saved.mode === "auto" ? ` (${formatThemeModeLabel(result.resolvedTheme)} active)` : ""
+      }.`
+    );
   }
 
   function onSaveFeaturePlaceholders() {
@@ -317,9 +385,9 @@ export default function SystemSettings() {
       <div className="panel">
         <div className="panel-header">
           <div>
-            <h3 className="panel-title">Theme Controls (Placeholder)</h3>
+            <h3 className="panel-title">Theme Controls</h3>
             <p className="panel-subtitle">
-              Placeholder switches for upcoming global theming support.
+              Apply global admin UI theme settings. Saved locally for this browser profile.
             </p>
           </div>
         </div>
@@ -374,8 +442,8 @@ export default function SystemSettings() {
           </div>
 
           <div className="field" style={{ alignSelf: "end" }}>
-            <button type="button" className="btn btn-secondary" onClick={onSaveThemePlaceholders}>
-              Save Theme Placeholders
+            <button type="button" className="btn btn-secondary" onClick={onApplyThemeSettings}>
+              Apply Theme
             </button>
           </div>
         </div>
